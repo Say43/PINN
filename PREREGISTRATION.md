@@ -1,8 +1,9 @@
 # Präregistrierung — PDE-strukturierte Attention in PINNs
 
 **Status: ENTWURF v3 (M0), NICHT eingefroren.** Fassung nach der Budget-Neuskalierung
-auf 5 GPU-h und nach Einarbeitung von `docs/baselines.md` (lit-agent, 2026-08-20). Wird nach Freigabe durch die Projektleitung und nach Vorliegen von
-`docs/baselines.md` eingefroren. Ab dem Einfrieren gilt: keine Änderung mehr an
+auf 5 GPU-h und nach Einarbeitung von `docs/baselines.md` (lit-agent, 2026-08-20).
+`docs/baselines.md` liegt vor. Fehlt zum Einfrieren nur noch die Freigabe der
+Projektleitung. Ab dem Einfrieren gilt: keine Änderung mehr an
 diesem Dokument; jede Abweichung wandert nach `DEVIATIONS.md` mit Datum, Begründung
 und der Angabe, ob die betroffenen Ergebnisse zum Zeitpunkt der Änderung bereits
 gesichtet waren.

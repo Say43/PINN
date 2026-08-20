@@ -14,6 +14,8 @@ Stage B Allen–Cahn), nicht vollfaktoriell. Pilot ohne konfirmatorischen Anspru
 
 ## Dokumente
 
+- [HANDOFF.md](HANDOFF.md) — Übergabestand für den nächsten Bearbeiter
+
 - [PREREGISTRATION.md](PREREGISTRATION.md) — Hypothesen, Matrix, Metriken, Ausschlussregeln
 - [DEVIATIONS.md](DEVIATIONS.md) — Abweichungen nach dem Einfrieren
 - [BUDGET.md](BUDGET.md) — GPU-Quota, Ist/Soll
