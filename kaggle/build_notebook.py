@@ -11,15 +11,16 @@ def launcher_source(
     results_dataset: str,
     plan_dataset: str | None,
     hardware: str,
+    point_scheme: str = "full",
 ) -> str:
     mount = code_dataset.split("/", 1)[1]
     config = "configs/stage_b.json" if mode == "stage_b" else "configs/stage_a.json"
     if mode == "m2a":
         command = [
             "python", "-m", "bench.calibrate", "--config", "configs/stage_a.json",
-            "--output", f"/kaggle/working/m2a_{hardware}_full.jsonl",
+            "--output", f"/kaggle/working/m2a_{hardware}_{point_scheme}.jsonl",
             "--hardware-label", hardware,
-            "--workers", "1", "--device", "cuda:0", "--point-scheme", "full",
+            "--workers", "1", "--device", "cuda:0", "--point-scheme", point_scheme,
             "--results-dataset", results_dataset,
         ]
     else:
@@ -34,7 +35,10 @@ def launcher_source(
 from pathlib import Path
 
 inputs = Path("/kaggle/input")
-roots = list(inputs.rglob("pyproject.toml"))
+legacy_mounted = Path("/kaggle/input/{mount}")
+roots = list(legacy_mounted.rglob("pyproject.toml"))
+if not roots:
+    roots = list(inputs.rglob("pyproject.toml"))
 if len(roots) != 1:
     raise RuntimeError(f"Expected one project root, found {{len(roots)}}")
 mounted = roots[0].parent
@@ -58,6 +62,7 @@ def main() -> None:
     parser.add_argument("--results-dataset", required=True, help="owner/slug")
     parser.add_argument("--plan-dataset", help="owner/slug containing m2_plan.json")
     parser.add_argument("--hardware", choices=("p100", "2xt4"), default="p100")
+    parser.add_argument("--point-scheme", choices=("full", "reduced"), default="full")
     parser.add_argument("--kernel-id", required=True, help="owner/kernel-slug")
     parser.add_argument("--output-dir", type=Path, default=Path("kaggle/generated"))
     args = parser.parse_args()
@@ -71,7 +76,7 @@ def main() -> None:
                 "outputs": [],
                 "source": [line + "\n" for line in launcher_source(
                     args.mode, args.code_dataset, args.results_dataset,
-                    args.plan_dataset, args.hardware
+                    args.plan_dataset, args.hardware, args.point_scheme
                 ).splitlines()],
             }
         ],

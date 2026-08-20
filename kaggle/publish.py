@@ -18,7 +18,14 @@ class KagglePublisher:
 
     @property
     def mounted_dir(self) -> Path:
-        return Path("/kaggle/input") / self.handle.split("/", 1)[1]
+        inputs = Path("/kaggle/input")
+        legacy = inputs / self.handle.split("/", 1)[1]
+        if legacy.exists():
+            return legacy
+        quota_files = list(inputs.rglob("quota_state.json"))
+        if len(quota_files) == 1:
+            return quota_files[0].parent
+        return legacy
 
     def _seed_from_mounted_dataset(self) -> None:
         self.publish_dir.mkdir(parents=True, exist_ok=True)
