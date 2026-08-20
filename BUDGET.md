@@ -1,43 +1,53 @@
 # Budget
 
-## Rahmen
+## Rahmen (Stand 2026-08-20, nach Neuskalierung)
 
-| Posten | Wert |
+| Posten | Stunden |
 |---|---|
-| GPU-Quota gesamt | 29.0 h |
-| Reserve (20 %, unantastbar) | 5.8 h |
-| Planbudget (80 %) | 23.2 h |
-| Zielhardware Kaggle | 2× T4 (Entscheidung 2026-08-20) |
-| Session-Limit | 12 h pro Notebook-Run |
-| Bereits verbraucht | 0.0 h |
+| GPU-Quota gesamt | **5.0** |
+| Kalibrierung (M2a Probe + M2b Seed-0-Slice) | 0.5 |
+| Stage A — Convection, 48 Laeufe (Seeds 1-4) | 2.0 |
+| Stage B — Allen-Cahn, 60 Laeufe | 1.5 |
+| Reserve (nicht verplanbar) | 1.0 |
+| Bereits verbraucht | 0.0 |
 
-## Anmerkung zur Hardwarewahl (relevant für die Nullhypothese)
+Die Reserve ist ausschliesslich fuer Wiederholungen nach Abstuerzen. Sie wird nicht
+fuer eine Stage C verplant.
 
-Die FP64-Bedingung ist der Kern der Nullhypothese. FP64-Durchsatz unterscheidet
-sich zwischen den Kaggle-Optionen um mehr als eine Größenordnung:
+Session-Limit: 12 h pro Notebook-Run. Netzwerk in Kaggle-Notebooks standardmaessig aus.
+`/kaggle/working` geht beim Session-Ende verloren, wenn nicht als Dataset committed.
 
-- **P100:** FP64 mit 1/2 der FP32-Rate (~4.7 TFLOPS) — FP64-Läufe sind bezahlbar.
-- **T4:** FP64 mit 1/32 der FP32-Rate (~0.25 TFLOPS) — FP64-Läufe kosten ein
-  Vielfaches; die zweite GPU hilft nur bei parallelen Läufen, nicht pro Lauf.
+## Hardware — offen, wird gemessen
 
-Gewählt wurde **2× T4**. Konsequenzen, die der Plan berücksichtigt:
+Frueher auf 2x T4 festgelegt, zurueckgenommen. Entscheidung faellt datenbasiert in M2a.
 
-- FP64-Läufe sind pro Lauf deutlich teurer als FP32. Die Präzisionsstufe wird
-  trotzdem nicht gekürzt — sie ist der Kern der Nullhypothese. Gekürzt wird nach
-  der in §3 der Präregistrierung festgelegten Reihenfolge.
-- Kaggle zählt **Session-Wallclock**, nicht Device-Stunden. Zwei Worker-Prozesse,
-  einer je GPU (`CUDA_VISIBLE_DEVICES=0` / `=1`), verdoppeln den Durchsatz pro
-  Quota-Stunde. Der Runner ist entsprechend als 2-Worker-Design gebaut; beide
-  Worker schreiben in dieselbe `results.sqlite` (WAL-Modus, Claim-Zeile pro Lauf).
-- Der Smoke-Test läuft als **Kaggle-CPU-Session ohne Accelerator** und belastet
-  das GPU-Quota nicht.
+Die Matrix ist zur Haelfte FP64, und FP64-Durchsatz trennt die Optionen um mehr als
+eine Groessenordnung:
 
-Die Kalibrierung (M2) misst das real, statt sich auf Datenblätter zu verlassen.
+| | FP32 | FP64 | Rate |
+|---|---|---|---|
+| P100 (Pascal GP100) | ~9.3 TFLOPS | ~4.7 TFLOPS | 1/2 |
+| T4 (Turing) | ~8.1 TFLOPS | ~0.25 TFLOPS | 1/32 |
+
+Auf 2x T4 gewinnt man Faktor 2 durch Parallelitaet und verliert auf der Haelfte aller
+Laeufe bis Faktor 32. Erwartung ist daher P100. Gemessen wird trotzdem: M2a faehrt
+beide Optionen mit je einer FP32- und einer FP64-Zelle.
+
+Bei 2x T4 laeuft der Runner mit zwei Workern (`CUDA_VISIBLE_DEVICES=0` / `=1`), da
+Kaggle Session-Wallclock zaehlt und nicht Device-Stunden. Bei P100 mit einem Worker.
+
+Der Smoke-Test laeuft lokal auf CPU/1660 Ti und belastet das GPU-Quota nicht.
+
+## Quota-Guard
+
+Vor jedem Kaggle-Run wird die kumulierte Verbrauchsschaetzung geprueft. Ueberschreitet
+sie das Stufenbudget, bricht der Guard ab, statt weiterzurechnen. Die Reserve ist fuer
+den Guard nicht verfuegbar.
 
 ## Ist/Soll-Bilanz
 
-Wird nach jedem Kaggle-Run vom budget-agent fortgeschrieben.
+Wird nach jedem Kaggle-Run fortgeschrieben.
 
-| Datum | Run | Zellen | Läufe | Geschätzt (h) | Ist (h) | Kumuliert (h) | Rest (h) |
+| Datum | Run | Stufe | Laeufe | Geschaetzt (h) | Ist (h) | Kumuliert (h) | Rest (h) |
 |---|---|---|---|---|---|---|---|
-| — | — | — | — | — | — | 0.0 | — |
+| — | — | — | — | — | — | 0.0 | 5.0 |

@@ -8,7 +8,9 @@ und Regularisierung?**
 Der eigentliche Beitrag ist die Confound-Kontrolle, nicht der Architekturvergleich.
 Ein Null-Resultat ist ein Ergebnis und wird als solches berichtet.
 
-Status: **M0 — Präregistrierung im Entwurf, noch keine Freigabe, kein GPU-Verbrauch.**
+Status: **M0 — Präregistrierung v2 im Entwurf, noch nicht eingefroren, kein
+GPU-Verbrauch.** Budget: 5 GPU-Stunden. Design gestuft (Stage A Convection,
+Stage B Allen–Cahn), nicht vollfaktoriell. Pilot ohne konfirmatorischen Anspruch.
 
 ## Dokumente
 
@@ -21,8 +23,8 @@ Status: **M0 — Präregistrierung im Entwurf, noch keine Freigabe, kein GPU-Ver
 ## Struktur
 
 ```
-src/pdes/     convection, reaction, wave, allen_cahn + Referenzlösungen
-src/models/   mlp, pinnsformer, grand, gread
+src/pdes/     convection, allen_cahn + Referenzlösungen
+src/models/   mlp, grand, gread (pinnsformer nur bei Restbudget)
 src/train.py  EIN Trainer für alle Bedingungen (nicht verhandelbar)
 bench/        Kalibrierung und Budgetplanung
 kaggle/       Notebook-Generator und resume-fähiger Runner
@@ -32,7 +34,10 @@ results/      results.sqlite — eine Zeile pro Lauf, auch Fehlläufe
 
 ## Ausführung
 
-Produktivläufe laufen ausschließlich auf Kaggle-GPU. Lokal läuft nur der
-CPU-Smoke-Test (200 Iterationen, 100 Kollokationspunkte), der vor jedem
-Kaggle-Run grün sein muss — er kostet kein Quota und ist die Absicherung dagegen,
-GPU-Stunden in einen Crash zu schicken.
+Alle Läufe, die in die Auswertung eingehen, stammen von derselben Kaggle-Hardware.
+Die lokale GPU dient ausschließlich Korrektheitstests, Debugging und grober
+Kostenrangfolge — sie rechnet **keinen** Arm der Matrix, weil das Präzision mit
+Hardware konfundieren würde.
+
+Der Smoke-Test (200 Iterationen, 100 Kollokationspunkte) muss vor jedem Kaggle-Run
+grün sein. Er kostet kein Quota.
