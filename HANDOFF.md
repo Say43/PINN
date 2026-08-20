@@ -1,5 +1,51 @@
 # Übergabe an GPT Sol
 
+> **AKTUELLER NACHTRAG — ersetzt den darunter stehenden historischen M0-Stand.**
+> M0 und M1 sind abgeschlossen; M2 ist implementiert, aber nicht auf Kaggle
+> ausgeführt. GPU-Verbrauch bleibt **0.0 von 5.0 h**. Der frühere Text bleibt als
+> Provenienz erhalten.
+
+## Aktueller Stand nach der Übernahme
+
+- Präregistrierung v3 eingefroren: Commit
+  `80cba6050642e29121af44517d2928474b3cff37`, SHA-256
+  `809e27249e424189a5e074293288f14d7bf1e77518b9eb5e2d6a143126832d40`,
+  Tag `prereg-v3`, Lock in `PREREGISTRATION.lock.json`.
+- M1 implementiert: ein Trainer für Convection/Allen–Cahn, MLP/GRAND/GREAD,
+  FP32/FP64 und none/double_backprop; deterministische Ausführung, SQLite-Attempts,
+  Integritätsbackup und Resume.
+- 17/17 Unit-Tests und `compileall` grün; der kombinierte Trainer-Test umfasst 24
+  PDE/Backbone/Präzisions/Regularisierungs-Subfälle. CPU-Smoke MLP: 200
+  L-BFGS-Iterationen, exakt 100 Loss-Punkte, 2.43 s, 435 Closure-Auswertungen.
+  Härtester CPU-Smoke GREAD+FP64+Double-Backprop: 200×100, 13.86 s, 854 Solver-NFE.
+  Beide schrieben echte SQLite-Zeilen und wurden beim zweiten Aufruf übersprungen.
+- `lambda_r = 1.0`, outcome-blind aus Initial-Lossskalen auf CPU gewählt. Artefakt:
+  `results/lambda_r_selection.json`. Die lokale GPU wurde nicht verwendet.
+- Kanonische Allen–Cahn-Referenz eingebunden: `data/allen_cahn.mat`, SHA-256
+  `ce640f188e334520f636d3d650cae6056a92a486546d40889bff93610bdbfa71`.
+- M2 vorbereitet: `bench/calibrate.py`, `bench/plan.py`, Quota-Guard,
+  `kaggle/build_notebook.py`, serieller Runner und fail-closed Publikation nach
+  jedem terminalen Lauf. Details: `docs/execution-contract.md`.
+
+## Aufgelöste frühere offene Punkte
+
+1. M2a/M2b bleibt unverändert und ist implementiert.
+2. Bei Budgetdruck werden zuerst outcome-unabhängig die Punktzahlen auf 396 bzw.
+   2175 reduziert; erst danach wird Stage B gestrichen.
+3. Die AM26-Summe 4396 ist korrekt: 4096 Domain + 100 IC + je 100 Residuen für
+   Periodizität von `u` und `u_x`.
+4. Aus Sicherheitsgründen läuft auch auf 2x T4 nur ein Studienworker. Sonst könnte
+   ein Session-Kill zwei Läufe vernichten; dokumentiert als D-1.
+
+## Nächster externer Schritt
+
+Benötigt werden Kaggle-Username sowie private Slugs für Code- und Results-Dataset.
+Danach je ein M2a-Notebook für P100 und 2x T4 erzeugen und ausführen, beide JSONL
+mit `bench/plan.py` auswerten, M2b fahren und **danach vor Stage A anhalten**. Keine
+Tokens oder Zugangsdaten ins Repo schreiben.
+
+---
+
 Stand: 2026-08-20. Repo: `c:\Festplatte (D)\Dateien\AI\PINN`, Branch `master`,
 sauberer working tree. **Kein GPU-Quota verbraucht (0.0 von 5.0 h).**
 

@@ -1,0 +1,39 @@
+{
+  "pde": {
+    "name": "convection",
+    "domain_points": 64,
+    "boundary_points": 18,
+    "initial_points": 18,
+    "evaluation_x": 21,
+    "evaluation_t": 21,
+    "beta": 50.0
+  },
+  "model": {
+    "backbone": "gread",
+    "mlp_hidden_dim": 32,
+    "graph_hidden_dim": 16,
+    "num_layers": 2,
+    "graph_k": 8,
+    "diffusion_step": 0.25
+  },
+  "train": {
+    "precision": "fp64",
+    "regularization": "double_backprop",
+    "seed": 0,
+    "max_iters": 200,
+    "history_size": 20,
+    "learning_rate": 1.0,
+    "line_search_fn": "strong_wolfe",
+    "tolerance_grad": 0.0,
+    "tolerance_change": 0.0,
+    "lambda_r": 1.0,
+    "log_every": 25,
+    "device": "cpu",
+    "max_local_gpu_seconds": 175.0
+  },
+  "persistence": {
+    "database": "results/smoke_graph.sqlite",
+    "backup": "results/smoke_graph.backup.sqlite",
+    "study_id": "m1_smoke_graph"
+  }
+}

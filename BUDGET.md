@@ -33,8 +33,11 @@ Auf 2x T4 gewinnt man Faktor 2 durch Parallelitaet und verliert auf der Haelfte 
 Laeufe bis Faktor 32. Erwartung ist daher P100. Gemessen wird trotzdem: M2a faehrt
 beide Optionen mit je einer FP32- und einer FP64-Zelle.
 
-Bei 2x T4 laeuft der Runner mit zwei Workern (`CUDA_VISIBLE_DEVICES=0` / `=1`), da
-Kaggle Session-Wallclock zaehlt und nicht Device-Stunden. Bei P100 mit einem Worker.
+Nach dem Praeregistrierungs-Freeze wurde der urspruengliche 2-Worker-Plan verworfen:
+Auch bei 2x T4 laeuft genau **ein** Worker. Nur so kann ein Session-Kill hoechstens
+den einen aktuell laufenden Einzellauf vernichten. Die zweite T4 bleibt ungenutzt;
+dieser Sicherheitsnachteil geht ehrlich in die Hardwarewahl von M2a ein. Siehe
+`DEVIATIONS.md`, D-1.
 
 Der Smoke-Test laeuft lokal auf CPU und belastet das GPU-Quota nicht. Die lokale
 1660 Ti darf nur fuer kurze Korrektheitstests bzw. die outcome-blinde lambda_r-

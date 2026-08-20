@@ -65,7 +65,11 @@ Abweichungen von der Literatur**, die vor dem Einfrieren bewusst getroffen wurde
   outcome-blinde Regel verhindert ein Tuning auf die Zielmetrik und ist lokal ohne
   Kaggle-Quota ausfuehrbar. Eine lokale GPU darf nur unter einer harten
   Drei-Minuten-Grenze verwendet werden.
-- **Offen:** der gewaehlte Wert ist noch einzutragen.
+- **Ergebnis (2026-08-20):** `lambda_r = 1.0`. Der Median von
+  `(lambda_r/2)*P/L_0` war 0.1239904 und damit im praeregistrierten Grid am
+  naechsten am Ziel 0.1. Berechnung ausschliesslich auf CPU in 6.5 s; keine
+  Referenzfehler, Trainingskurven oder Studienergebnisse wurden gesichtet.
+- **Artefakt:** `results/lambda_r_selection.json`.
 
 ## L-8 — Budgetkuerzung reduziert Punkte vor dem Streichen von Allen-Cahn
 - **Gegen:** AM26-Punktzahlen 800 (Convection) und 4396 (Allen-Cahn)
@@ -75,3 +79,22 @@ Abweichungen von der Literatur**, die vor dem Einfrieren bewusst getroffen wurde
   Doppeldissoziation und damit den Mechanismustest. Eine outcome-unabhaengige,
   symmetrische Punktreduktion bewahrt ihn und ist durch AM26s Overfitting-Befund
   inhaltlich plausibel. Erst wenn diese Stufe nicht reicht, wird Stage B gestrichen.
+
+---
+
+## Abweichungen nach dem Praeregistrierungs-Freeze
+
+## D-1 — 2x T4 seriell statt mit zwei Workern
+- **Datum:** 2026-08-20
+- **Abschnitt:** Ausfuehrung/Budget; die Praeregistrierung selbst legt W nicht fest,
+  der Uebergabestand und `BUDGET.md` sahen fuer 2x T4 jedoch W=2 vor.
+- **Vorher:** zwei parallele Laeufe, einer je T4.
+- **Nachher:** genau ein aktiver Studienlauf auf jeder Hardwareoption.
+- **Begruendung:** Bei einem Session-Kill koennten sonst zwei unvollstaendige Laeufe
+  verloren gehen. Das verletzt die haertere Persistenzregel "nie mehr als einen
+  Einzellauf". Serieller Betrieb ist fail-safe und macht den Nachteil von T4 bei
+  FP64 in der Hardwarewahl sichtbar, statt ihn durch riskante Parallelitaet zu
+  kaschieren.
+- **Ergebnisse gesichtet:** nein; keine Kaggle- oder Studienlaeufe gestartet,
+  GPU-Verbrauch weiterhin 0.0 h.
+- **Commit:** wird mit M1/M2-Vorbereitung eingetragen.

@@ -5,7 +5,11 @@ venv/
 .ipynb_checkpoints/
 *.log
 results/*.sqlite-journal
+results/*.sqlite-wal
+results/*.sqlite-shm
+results/*.backup.sqlite
 results/raw/
+kaggle/generated/
 analysis/figures/*.png
 !analysis/figures/.gitkeep
 .DS_Store
