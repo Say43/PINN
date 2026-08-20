@@ -44,7 +44,7 @@ Regularisierungsartefakt.
 
 | Faktor | Stufen | n |
 |---|---|---|
-| PDE | convection (Failure-Regime), reaction, wave, allen_cahn | 4 |
+| PDE | convection (Failure-Regime), reaction, reaction_diffusion, wave | 4 |
 | Backbone | mlp, pinnsformer, grand, gread | 4 |
 | Präzision | fp32, fp64 | 2 |
 | Regularisierung | none, weight_decay, double_backprop | 3 |
@@ -73,9 +73,12 @@ Seitenangabe belegt. Arbeitsannahme bis dahin (NICHT als belegt behandeln):
 - **Reaction:** u_t − ρ u (1 − u) = 0, ρ im Failure-Regime (ρ ≈ 5–10),
   gaußförmige IC.
 - **Wave:** u_tt − β² u_xx = 0 mit dem in der Quelle angegebenen β.
-- **Allen–Cahn:** steht *nicht* in Krishnapriyan et al. Quelle für die Parameter
-  wird der lit-agent bestimmen (Kandidat: Wang et al., *An Expert's Guide*).
-  Widerspruch dokumentieren statt still eine Variante wählen.
+- **Reaction-Diffusion:** u_t − ν u_xx − ρ u (1 − u) = 0 mit ν, ρ aus der Quelle.
+
+Entscheidung vom 2026-08-20 (vor dem Einfrieren): Allen–Cahn wurde durch
+Reaction-Diffusion ersetzt, weil Allen–Cahn nicht in Krishnapriyan et al. steht und
+die Auflage „Parameter exakt aus Krishnapriyan“ sonst nur über einen Quellenmix
+erfüllbar wäre. Alle vier Benchmark-PDEs stammen jetzt aus einer Quelle.
 
 ### Fairness-Auflagen
 
@@ -98,7 +101,7 @@ Schwelle liegt:
 | convection | 0.10 |
 | reaction | 0.10 |
 | wave | 0.10 |
-| allen_cahn | 0.10 |
+| reaction_diffusion | 0.10 |
 
 Die Schwelle 0.10 ist vor jedem Lauf fixiert und wird nicht nachträglich
 angepasst. (Begründung: in der Failure-Mode-Literatur trennt sie klar zwischen
@@ -136,8 +139,8 @@ landen in `results/results.sqlite`.
 
 ## 7. Abbruchkriterien für das Projekt
 
-- **Budget:** Der Quota-Guard bricht ab, sobald die kumulierte Verbrauchsschätzung
-  80 % des Gesamtquotas erreicht. 20 % bleiben Reserve.
+- **Budget:** Gesamtquota 29 GPU-h. Planbudget 23.2 h, Reserve 5.8 h. Der
+  Quota-Guard bricht ab, sobald die kumulierte Verbrauchsschätzung 23.2 h erreicht.
 - **Inhaltlich:** Zeigt die Pilotmatrix (M3), dass der Backbone-Effekt bereits bei
   fp32/none unter 5 Prozentpunkten Success-Rate-Differenz liegt, wird die volle
   Matrix nicht gerechnet. Es wird als Null-Resultat mit der Pilotstatistik
