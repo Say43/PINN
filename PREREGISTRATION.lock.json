@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "document": "PREREGISTRATION.md",
+  "frozen_at": "2026-08-20",
+  "freeze_commit": "80cba6050642e29121af44517d2928474b3cff37",
+  "sha256": "809e27249e424189a5e074293288f14d7bf1e77518b9eb5e2d6a143126832d40",
+  "git_tag": "prereg-v3"
+}
