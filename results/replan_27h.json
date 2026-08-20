@@ -1,0 +1,49 @@
+{
+  "quota_hours": 27.0,
+  "reserve_hours": 2.0,
+  "usable_hours": 25.0,
+  "points": 1224,
+  "seeds": 5,
+  "hours_by_iters": {
+    "2000": {
+      "A  nur none, 3 Backbones": 3.7574663299663293,
+      "B  none + double_backprop, 3 Backbones": 11.272398989898988,
+      "B- none + double_backprop, ohne gread": 6.369810606060605
+    },
+    "3000": {
+      "A  nur none, 3 Backbones": 5.636199494949494,
+      "B  none + double_backprop, 3 Backbones": 16.908598484848486,
+      "B- none + double_backprop, ohne gread": 9.55471590909091
+    },
+    "4000": {
+      "A  nur none, 3 Backbones": 7.514932659932659,
+      "B  none + double_backprop, 3 Backbones": 22.544797979797977,
+      "B- none + double_backprop, ohne gread": 12.73962121212121
+    },
+    "5000": {
+      "A  nur none, 3 Backbones": 9.393665824915825,
+      "B  none + double_backprop, 3 Backbones": 28.180997474747475,
+      "B- none + double_backprop, ohne gread": 15.924526515151513
+    },
+    "6000": {
+      "A  nur none, 3 Backbones": 11.272398989898988,
+      "B  none + double_backprop, 3 Backbones": 33.81719696969697,
+      "B- none + double_backprop, ohne gread": 19.10943181818182
+    },
+    "8000": {
+      "A  nur none, 3 Backbones": 15.029865319865317,
+      "B  none + double_backprop, 3 Backbones": 45.089595959595954,
+      "B- none + double_backprop, ohne gread": 25.47924242424242
+    },
+    "10000": {
+      "A  nur none, 3 Backbones": 18.78733164983165,
+      "B  none + double_backprop, 3 Backbones": 56.36199494949495,
+      "B- none + double_backprop, ohne gread": 31.849053030303025
+    },
+    "20000": {
+      "A  nur none, 3 Backbones": 37.5746632996633,
+      "B  none + double_backprop, 3 Backbones": 112.7239898989899,
+      "B- none + double_backprop, ohne gread": 63.69810606060605
+    }
+  }
+}
