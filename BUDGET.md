@@ -9,7 +9,7 @@
 | Stage A — Convection, 48 Laeufe (Seeds 1-4) | 2.0 |
 | Stage B — Allen-Cahn, 60 Laeufe | 1.5 |
 | Reserve (nicht verplanbar) | 1.0 |
-| Bereits verbraucht (Kaggle-Abrechnung, seit Projektstart) | 0.57 |
+| Bereits verbraucht (Kaggle-Abrechnung, seit Projektstart) | 1.21 |
 
 Die Reserve ist ausschliesslich fuer Wiederholungen nach Abstuerzen. Sie wird nicht
 fuer eine Stage C verplant.
@@ -71,7 +71,56 @@ Wird nach jedem Kaggle-Run fortgeschrieben.
 
 | Datum | Run | Stufe | Laeufe | Geschaetzt (h) | Ist (h) | Kumuliert (h) | Rest (h) |
 |---|---|---|---|---|---|---|---|
-| — | — | — | — | — | — | 0.0 | 5.0 |
+| 2026-08-20 | M2a + Profiling | Kalibrierung | — | 0.5 | 0.570 | 0.570 | 4.430 |
+| 2026-08-20 | M2b (abgebrochen) | Stage A | 5 von 6 | 0.645 | 0.637 | 1.207 | 3.793 |
+
+## M2b-Iststand nach Kernel-Abbruch (2026-08-20, 21:30)
+
+Der Kernel `says43/pinn-pde-attention-m2b` endete mit
+`KernelWorkerStatus.CANCEL_ACKNOWLEDGED`, also durch Abbruch, nicht durch regulaeren
+Abschluss. Kernel-Log ist 0 Byte, die Ursache ist daraus **nicht** feststellbar.
+
+Zustand in `results.sqlite` (nur Status und Kosten gelesen, keine Fehlerkennzahlen):
+
+| Zelle | Status | Wall-Clock | Iterationen | Funktionsauswertungen |
+|---|---|---|---|---|
+| mlp / fp32 | completed | 325.9 s | 6000 | 27 569 |
+| mlp / fp64 | completed | 253.5 s | 6000 | 16 720 |
+| grand / fp32 | completed | 595.8 s | 6000 | 14 948 |
+| grand / fp64 | completed | 530.0 s | 6000 | 12 605 |
+| gread / fp64 | completed | 589.7 s | 6000 | 12 675 |
+| gread / fp32 | **running** (abgeschnitten) | — | — | — |
+
+Fuenf von sechs Zellen sind terminal und transaktional gesichert. Die
+Persistenzgarantie hat gehalten: der Abbruch hat genau einen Einzellauf gekostet,
+wie im Ausfuehrungsvertrag vorgesehen. Der verwaiste `running`-Attempt wird beim
+Resume als `interrupted` behalten und als Infrastrukturfehler mit identischem Seed
+neu versucht.
+
+### Gemessener Mehraufwand gegenueber der Projektion
+
+Die M2a-Zeiten erfassen nur die Optimizer-Schleife (D-3), nicht die fixen
+101x101-Auswertungen. Der Unterschied ist jetzt gemessen:
+
+| Zelle | projiziert | ist | Faktor |
+|---|---|---|---|
+| mlp / fp32 | 215.2 s | 325.9 s | 1.51 |
+| mlp / fp64 | 220.4 s | 253.5 s | 1.15 |
+| grand / fp32 | 475.5 s | 595.8 s | 1.25 |
+| grand / fp64 | 466.8 s | 530.0 s | 1.14 |
+| gread / fp64 | 466.8 s | 589.7 s | 1.26 |
+
+**Mittlerer Faktor 1.263, Median 1.253.**
+
+Konsequenz: Die Stage-A-Projektion steigt von 3.223 h auf **4.071 h** und
+**ueberschreitet damit das Stage-A-Limit von 3.472 h**. Unter der selbstgesetzten
+5-h-Grenze wuerde der Quota-Guard vor dem Ende von Stage A ausloesen.
+
+Anmerkung zu D-4: Der dort als nicht praeregistriert entfernte Sicherheitsfaktor
+1.25 entspricht fast exakt dem jetzt gemessenen 1.263. Die Entfernung war formal
+richtig — der Faktor war nicht praeregistriert —, aber er hat empirisch genau das
+abgedeckt, was nun fehlt. Kuenftige Projektionen verwenden den **gemessenen**
+Faktor, nicht einen gesetzten.
 
 ## Zusatzbudgetrechnung fuer die Wiederherstellung des Scopes (2026-08-20)
 
