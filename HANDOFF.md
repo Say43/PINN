@@ -13,7 +13,7 @@
   Tag `prereg-v3`, Lock in `PREREGISTRATION.lock.json`.
 - M1 implementiert: ein Trainer für Convection/Allen–Cahn, MLP/GRAND/GREAD,
   FP32/FP64 und none/double_backprop; deterministische Ausführung, SQLite-Attempts,
-  Integritätsbackup und Resume.
+  Integritätsbackup und Resume. Commit: `0195568`.
 - 17/17 Unit-Tests und `compileall` grün; der kombinierte Trainer-Test umfasst 24
   PDE/Backbone/Präzisions/Regularisierungs-Subfälle. CPU-Smoke MLP: 200
   L-BFGS-Iterationen, exakt 100 Loss-Punkte, 2.43 s, 435 Closure-Auswertungen.

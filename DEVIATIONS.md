@@ -97,4 +97,4 @@ Abweichungen von der Literatur**, die vor dem Einfrieren bewusst getroffen wurde
   kaschieren.
 - **Ergebnisse gesichtet:** nein; keine Kaggle- oder Studienlaeufe gestartet,
   GPU-Verbrauch weiterhin 0.0 h.
-- **Commit:** wird mit M1/M2-Vorbereitung eingetragen.
+- **Commit:** `0195568` (`Complete M1 pipeline and prepare safe Kaggle M2`).
