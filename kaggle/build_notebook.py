@@ -30,13 +30,20 @@ def launcher_source(
             "python", "-m", "kaggle.runner", "--stage", mode, "--config", config,
             "--plan", f"/kaggle/input/{plan_mount}/m2_plan.json",
         ]
-    return f'''import os, subprocess, sys
+    return f'''import os, shutil, subprocess, sys, zipfile
 from pathlib import Path
 
-roots = list(Path("/kaggle/input/{mount}").rglob("pyproject.toml"))
+inputs = Path("/kaggle/input")
+roots = list(inputs.rglob("pyproject.toml"))
 if len(roots) != 1:
     raise RuntimeError(f"Expected one project root, found {{len(roots)}}")
-root = roots[0].parent
+mounted = roots[0].parent
+root = Path("/kaggle/working/project")
+root.mkdir(parents=True, exist_ok=True)
+shutil.copytree(mounted, root, dirs_exist_ok=True)
+for archive in mounted.glob("*.zip"):
+    with zipfile.ZipFile(archive) as handle:
+        handle.extractall(root)
 os.chdir(root)
 sys.path.insert(0, str(root))
 os.environ["PINN_RESULTS_DATASET"] = "{results_dataset}"
