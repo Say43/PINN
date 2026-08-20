@@ -1,3 +1,83 @@
+# Sofort-Uebergabe an Claude Code waehrend M2b (2026-08-20, ca. 20:43 CEST)
+
+Dieser Abschnitt ist der aktuelle operative Stand und ersetzt auch den direkt
+darunter stehenden Nachtrag nach M2a.
+
+## Was gerade laeuft
+
+- Privater Kaggle-Kernel: `says43/pinn-pde-attention-m2b`
+  (`https://www.kaggle.com/code/says43/pinn-pde-attention-m2b`).
+- Letzter kontrollierter Status: `RUNNING`, kein Fehlerstatus.
+- M2b fuehrt genau sechs Convection-/Seed-0-Laeufe aus: MLP, GRAND und GREAD,
+  jeweils FP32/FP64, `regularization=none`, reduziertes 396-Punkte-Schema,
+  6000 L-BFGS-Iterationen, ein Worker auf 2x T4.
+- Zwei von sechs Bedingungen sind bereits transaktional im privaten Dataset
+  `says43/pinn-pde-attention-results` gesichert und in SQLite `completed`:
+  MLP/FP32 und MLP/FP64. Die vier Graphbedingungen waren beim Handoff noch offen.
+- Ergebniskennzahlen wurden absichtlich noch nicht gelesen. Bisher wurde nur
+  Status/Vollstaendigkeit geprueft, damit keine partielle Ergebniskenntnis weitere
+  Entscheidungen beeinflusst.
+- Den laufenden Kernel nicht duplizieren oder neu starten. Er publiziert nach jedem
+  terminalen Lauf. Bei Fehler erst Logs holen; ein Neustart setzt aus SQLite fort
+  und ueberspringt terminale Versuche.
+- **Nach M2b anhalten. Stage A nicht automatisch starten.**
+
+Statuskontrolle:
+
+```powershell
+& '.\.venv\Scripts\kaggle.exe' kernels status says43/pinn-pde-attention-m2b
+& '.\.venv\Scripts\kaggle.exe' datasets files says43/pinn-pde-attention-results
+```
+
+## Wichtige Korrektur zur Aussagekraft
+
+Die budgetbedingt gekuerzte Matrix ist **nicht ausreichend, um das urspruengliche
+Forschungsziel vollstaendig zu beantworten**. Das muss im weiteren Bericht klar
+und an prominenter Stelle stehen:
+
+- Der laufende M2b-Slice mit nur Seed 0 ist ein technischer Pilot und erlaubt
+  keinerlei robuste Inferenz.
+- Selbst die danach geplante gekuerzte Stage A (30 Laeufe, fuenf Seeds) untersucht
+  nur Convection. Sie kann einen Architekturvergleich bedingt auf
+  `regularization=none` und stratifiziert nach Praezision liefern.
+- Weil Double Backprop gestrichen wurde, kann sie die urspruengliche H0
+  (Architekturgewinn verschwindet nach Kontrolle fuer Praezision **und**
+  Regularisierung) nicht vollstaendig testen.
+- Weil Allen-Cahn/Stage B gestrichen wurde, kann sie die praeregistrierte
+  Doppeldissoziation GRAND-Convection versus GREAD-Allen-Cahn nicht testen.
+- PINNsFormer bleibt ebenfalls ausserhalb der Kernmatrix. Ein Ergebnis der
+  gekuerzten Stage A darf daher weder als allgemeiner Attention-Vergleich noch als
+  Bestaetigung/Widerlegung des urspruenglichen Gesamtmechanismus formuliert werden.
+
+Die Kuerzung war kein stiller Scope-Wechsel, sondern die vorab festgelegte
+outcome-blinde Budgethierarchie bei harter 5-h-Grenze. Sie erhaelt einen engeren,
+deskriptiven Convection-Piloten, aber nicht den gesamten urspruenglichen Claim.
+
+## Empfohlene Fortsetzung nach Abschluss von M2b
+
+1. Alle sechs M2b-Zellen aus dem privaten Dataset laden; SQLite-Integritaet,
+   Konfigurationen, Status und Quota pruefen. Erst bei 6/6 terminalen Zellen die
+   Kennzahlen gemeinsam auswerten; Fehler/Timeouts zaehlen als Ergebnisse.
+2. `BUDGET.md`, `FINDINGS.md` und diesen Handoff mit Ist-Quota, Nullbefund zuerst,
+   Kennzahlen und klarer Reichweitenbegrenzung aktualisieren. Praeregistrierung
+   nicht aendern.
+3. Vor weiteren 24 Stage-A-Laeufen neu entscheiden: Unter unveraenderter 5-h-Grenze
+   kann nur der engere Convection-Pilot abgeschlossen werden. Fuer das
+   urspruengliche Ziel muss zuerst eine outcome-unabhaengige Zusatzbudgetrechnung
+   fuer mindestens Double Backprop auf Convection und den Allen-Cahn-Kontrast
+   erstellt und eine hoehere GPU-Quote freigegeben werden. Nicht versuchen, diese
+   beiden Ziele sprachlich gleichzusetzen.
+4. Die 1.0-h-Reserve bleibt bis zu dieser Entscheidung unantastbar und dient nur
+   technischen Wiederholungen. Keine lokale GPU fuer Studienarme verwenden.
+
+Letzter sauberer Commit vor M2b: `5c4494e`. Finaler Plan-Hash:
+`8a9111bc3c83eb547c020b456881d412ee16e116ef402734dd68e07aa2407ce4`.
+Vor M2b waren dem Projekt 0.57 von 5.0 Kaggle-GPU-Stunden zugerechnet. M2b wird
+gegen das Stage-A-Budget gebucht; nach Abschluss mit der Kaggle-Kontoseite bzw.
+CLI abgleichen.
+
+---
+
 # Uebergabe-Nachtrag nach M2a (2026-08-20)
 
 Dieser Abschnitt ersetzt fuer den aktuellen Ausfuehrungsstand alle darunter
