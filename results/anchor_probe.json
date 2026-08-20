@@ -1,0 +1,71 @@
+{
+  "note": "Machbarkeitsanker, KEINE Studiendaten",
+  "resolution": "32 Zeitstuetzstellen, dt=0.03128, 7.96 Perioden in t, 4.02 Abtastungen pro Periode (gefordert 4.0) -> ausreichend",
+  "samples_per_period": 4.017311605777948,
+  "config": {
+    "domain_points": 1024,
+    "backbone": "mlp",
+    "precision": "fp32",
+    "regularization": "double_backprop",
+    "max_iters": 300,
+    "seed": 0,
+    "device": "cpu"
+  },
+  "status": "completed",
+  "wall_seconds": 33.14907689997926,
+  "best_relative_l2": 1.0000295639038086,
+  "final_relative_l2": 1.404844045639038,
+  "target": 0.1,
+  "target_reached": false,
+  "iterations_to_target": null,
+  "history": [
+    {
+      "iteration": 1,
+      "function_evaluations": 2,
+      "wall_seconds": 0.04940809999243356,
+      "relative_l2": 1.0000295639038086,
+      "loss_total": 0.8059858083724976,
+      "loss_base": 0.5251033902168274,
+      "loss_domain": 0.02807290107011795,
+      "loss_boundary": 0.00046137161552906036,
+      "loss_initial": 0.49656909704208374,
+      "loss_regularizer": 0.5617648959159851
+    },
+    {
+      "iteration": 100,
+      "function_evaluations": 212,
+      "wall_seconds": 5.733005099988077,
+      "relative_l2": 1.4254225492477417,
+      "loss_total": 0.7163169384002686,
+      "loss_base": 0.45816391706466675,
+      "loss_domain": 9.325995779363438e-05,
+      "loss_boundary": 0.021221859380602837,
+      "loss_initial": 0.43684878945350647,
+      "loss_regularizer": 0.5163059830665588
+    },
+    {
+      "iteration": 200,
+      "function_evaluations": 417,
+      "wall_seconds": 12.930985199986026,
+      "relative_l2": 1.4022202491760254,
+      "loss_total": 0.7147616147994995,
+      "loss_base": 0.4542236328125,
+      "loss_domain": 0.00013953463349025697,
+      "loss_boundary": 0.020149365067481995,
+      "loss_initial": 0.4339347183704376,
+      "loss_regularizer": 0.5210760235786438
+    },
+    {
+      "iteration": 300,
+      "function_evaluations": 1007,
+      "wall_seconds": 31.742808200011496,
+      "relative_l2": 1.404844045639038,
+      "loss_total": 0.7147116661071777,
+      "loss_base": 0.45423489809036255,
+      "loss_domain": 0.00014962625573389232,
+      "loss_boundary": 0.020327595993876457,
+      "loss_initial": 0.4337576627731323,
+      "loss_regularizer": 0.5209535956382751
+    }
+  ]
+}
