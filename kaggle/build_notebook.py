@@ -16,6 +16,7 @@ def launcher_source(
     calibration_precisions: tuple[str, ...] = ("fp32", "fp64"),
     calibration_repeats: int = 3,
     budget_stage: str = "calibration",
+    cell_wall_budget_seconds: float = 2200.0,
 ) -> str:
     mount = code_dataset.split("/", 1)[1]
     bootstrap = ""
@@ -43,6 +44,7 @@ def launcher_source(
         command = [
             "python", "-m", "kaggle.runner", "--stage", mode, "--config", config,
             "--plan", "__M2_PLAN__",
+            "--wall-budget-seconds", str(cell_wall_budget_seconds),
         ]
     return f'''import os, shutil, subprocess, sys, zipfile
 from pathlib import Path
@@ -71,9 +73,22 @@ if "__M2_PLAN__" in command:
     if len(plan_paths) != 1:
         raise RuntimeError(f"Expected one M2 plan, found {{len(plan_paths)}}")
     command = [str(plan_paths[0]) if value == "__M2_PLAN__" else value for value in command]
-subprocess.run(command, check=True)
+print("launcher ready:", " ".join(command), flush=True)
 '''
 
+
+def runner_cell_source(index: int, total: int) -> str:
+    """One execution cell.
+
+    Kaggle executes committed notebooks through papermill/nbclient, which kills a
+    single cell after 3000 s (observed in the first M2b run, which lost the sixth
+    condition mid-flight). Every cell therefore re-enters the resume-aware runner,
+    which skips terminal attempts and stops on its own wall budget well before the
+    cell timeout can strike.
+    """
+    return f'''print("runner pass {index}/{total}", flush=True)
+subprocess.run(command, check=True)
+'''
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build a thin Kaggle launcher notebook")
@@ -95,25 +110,44 @@ def main() -> None:
     parser.add_argument(
         "--budget-stage", choices=("calibration", "stage_a"), default="calibration"
     )
+    parser.add_argument(
+        "--runner-cells", type=int, default=1,
+        help="number of resume passes; each is its own notebook cell with its own 3000 s timeout",
+    )
+    parser.add_argument(
+        "--cell-wall-budget", type=float, default=2200.0,
+        help="wall budget per runner cell in seconds; must stay clearly below the 3000 s cell timeout",
+    )
     parser.add_argument("--kernel-id", required=True, help="owner/kernel-slug")
     parser.add_argument("--output-dir", type=Path, default=Path("kaggle/generated"))
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    if args.runner_cells < 1:
+        raise SystemExit("--runner-cells must be at least 1")
+    if args.cell_wall_budget >= 3000.0:
+        raise SystemExit("--cell-wall-budget must stay below the 3000 s Kaggle cell timeout")
+
+    def code_cell(source: str) -> dict:
+        return {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [line + "\n" for line in source.splitlines()],
+        }
+
+    cells = [code_cell(launcher_source(
+        args.mode, args.code_dataset, args.results_dataset,
+        args.plan_dataset, args.hardware, args.point_scheme,
+        tuple(args.calibration_backbones), tuple(args.calibration_precisions),
+        args.calibration_repeats, args.budget_stage, args.cell_wall_budget,
+    ))]
+    cells.extend(
+        code_cell(runner_cell_source(index + 1, args.runner_cells))
+        for index in range(args.runner_cells)
+    )
     notebook = {
-        "cells": [
-            {
-                "cell_type": "code",
-                "execution_count": None,
-                "metadata": {},
-                "outputs": [],
-                "source": [line + "\n" for line in launcher_source(
-                    args.mode, args.code_dataset, args.results_dataset,
-                    args.plan_dataset, args.hardware, args.point_scheme,
-                    tuple(args.calibration_backbones), tuple(args.calibration_precisions),
-                    args.calibration_repeats, args.budget_stage,
-                ).splitlines()],
-            }
-        ],
+        "cells": cells,
         "metadata": {
             "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
             "language_info": {"name": "python", "version": "3"},

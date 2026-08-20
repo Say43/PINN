@@ -61,8 +61,11 @@ def check(rows: list[dict]) -> dict:
         and r["regularization"] == "none"
     ]
     errors = [r for r in terminal if r["error_type"]]
+    # relative_l2 haelt den bereits auf [1e-8, 10.0] geklippten Wert (src/train.py).
+    # relative_l2_censored ist ein Flag, kein Wert.
+    censored = [r for r in terminal if r["relative_l2_censored"]]
 
-    pc1_value = baseline[0]["relative_l2_censored"] if baseline else None
+    pc1_value = baseline[0]["relative_l2"] if baseline else None
     pc1 = {
         "name": "PC-1 Failure Mode reproduziert",
         "rule": f"mlp/fp32/none relativer L2 > {FAILURE_MODE_FLOOR}",
@@ -70,7 +73,7 @@ def check(rows: list[dict]) -> dict:
         "passed": pc1_value is not None and pc1_value > FAILURE_MODE_FLOOR,
     }
 
-    values = [r["relative_l2_censored"] for r in terminal if r["relative_l2_censored"] is not None]
+    values = [r["relative_l2"] for r in terminal if r["relative_l2"] is not None]
     best = min(values) if values else None
     pc2 = {
         "name": "PC-2 Aufloesungsvermoegen",
@@ -82,7 +85,10 @@ def check(rows: list[dict]) -> dict:
     pc3 = {
         "name": "PC-3 Numerische Integritaet",
         "rule": "keine unerklaerten NaN/Inf- oder Infrastrukturabbrueche",
-        "value": [f"{r['backbone']}/{r['precision']}: {r['error_type']}" for r in errors],
+        "value": {
+            "fehler": [f"{r['backbone']}/{r['precision']}: {r['error_type']}" for r in errors],
+            "zensiert": [f"{r['backbone']}/{r['precision']}" for r in censored],
+        },
         "passed": not errors,
     }
 

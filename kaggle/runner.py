@@ -49,6 +49,16 @@ def main() -> None:
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--plan", type=Path, required=True)
     parser.add_argument("--quota-state", type=Path, default=Path("/kaggle/working/quota_state.json"))
+    parser.add_argument(
+        "--wall-budget-seconds",
+        type=float,
+        default=0.0,
+        help=(
+            "stop launching further runs once the conservative estimate no longer fits into "
+            "this process wall budget; 0 disables the guard. Protects against the Kaggle "
+            "notebook cell timeout (observed: 3000 s), which kills a run mid-flight."
+        ),
+    )
     args = parser.parse_args()
     handle = os.environ.get("PINN_RESULTS_DATASET")
     if not handle:
@@ -79,8 +89,21 @@ def main() -> None:
     regularizations = tuple(selected.get("regularizations", ("none", "double_backprop")))
     queue = list(stage_conditions(args.stage, regularizations))
     queue.sort(key=lambda item: (estimated_hours(plan, item[0], item[1], item[2]), item))
+    process_started = time.perf_counter()
+    checkpoint = process_started
     for backbone, precision, regularization, seed in queue:
         estimate = estimated_hours(plan, backbone, precision, regularization)
+        if args.wall_budget_seconds > 0.0:
+            elapsed = time.perf_counter() - process_started
+            if elapsed + estimate * 3600.0 > args.wall_budget_seconds:
+                print(
+                    f"wall budget guard: stopping before {backbone}/{precision}/"
+                    f"{regularization}/seed={seed}; elapsed {elapsed:.0f} s + estimate "
+                    f"{estimate * 3600.0:.0f} s exceeds budget "
+                    f"{args.wall_budget_seconds:.0f} s. Remaining work resumes from SQLite.",
+                    flush=True,
+                )
+                return
         if not quota.can_start(budget_stage, estimate):
             raise RuntimeError(
                 f"quota guard stopped before {backbone}/{precision}/{regularization}/seed={seed}; "
@@ -92,10 +115,14 @@ def main() -> None:
             regularization=regularization,
             seed=seed,
         )
-        started = time.perf_counter()
         result = run(config)
-        actual_hours = (time.perf_counter() - started) / 3600.0
         if result["status"] != "skipped":
+            # Book the whole interval since the last checkpoint, not just the training
+            # call: restore, publication and setup overhead consume real GPU session
+            # time and must not silently disappear from the quota.
+            now = time.perf_counter()
+            actual_hours = (now - checkpoint) / 3600.0
+            checkpoint = now
             quota.record(budget_stage, actual_hours)
             quota.save(args.quota_state)
             note = (

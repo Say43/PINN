@@ -152,3 +152,20 @@ Abweichungen von der Literatur**, die vor dem Einfrieren bewusst getroffen wurde
   Seedzahl bleiben unangetastet.
 - **Begruendung:** Exakte Anwendung der eingefrorenen Kuerzungshierarchie auf die
   Timingdaten; keine Fehler-, Loss- oder Erfolgswerte wurden verwendet.
+
+## D-7 — M2b-Slice als Evidenz verworfen: Kollokationsgitter unter Nyquist
+- **Datum:** 2026-08-20
+- **Abschnitt:** Ausfuehrung, nicht Praeregistrierung
+- **Befund:** Das reduzierte Schema mit 196 Domaenenpunkten ergibt ein 14x14-Gitter.
+  Die Loesung sin(x - 50t) hat 7.96 Perioden in t; 14 Stuetzstellen sind 1.75
+  Abtastungen pro Periode und damit unter dem Nyquist-Limit.
+- **Folge:** Alle sechs Zellen erreichen Residual-Losses von 1e-6 bis 4e-4 bei
+  relativen L2-Fehlern von 1.21 bis 2.31, also schlechter als der Nullpraediktor.
+  Signatur von Aliasing. Der Slice wird nicht als Architekturevidenz gewertet.
+- **Ergebnisse gesichtet:** ja. Der Befund wurde erst nach dem Gate-Lauf sichtbar.
+  Die Verwerfung folgt aber der vorab in docs/decision-gate-m2b.md fixierten
+  Regel PC-2, nicht einer nachtraeglichen Begruendung.
+- **Verantwortlich:** Der Hebel "Punktzahl zuerst reduzieren" wurde vom Lead-Agent
+  empfohlen, ohne die Abtastbedingung gegen beta zu pruefen.
+- **Konsequenz:** Auflaesungspruefung als harte Vorbedingung vor jedem Lauf,
+  Mindestens vier Abtastungen pro Periode. Details in FINDINGS.md Abschnitt 6.

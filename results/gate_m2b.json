@@ -1,0 +1,35 @@
+{
+  "checks": [
+    {
+      "name": "Vollstaendigkeit",
+      "rule": "6 terminale Zellen erforderlich",
+      "value": 6,
+      "passed": true
+    },
+    {
+      "name": "PC-1 Failure Mode reproduziert",
+      "rule": "mlp/fp32/none relativer L2 > 0.5",
+      "value": 1.772109866142273,
+      "passed": true
+    },
+    {
+      "name": "PC-2 Aufloesungsvermoegen",
+      "rule": "mindestens eine Zelle mit relativem L2 < 0.1",
+      "value": 1.2055288943291222,
+      "passed": false
+    },
+    {
+      "name": "PC-3 Numerische Integritaet",
+      "rule": "keine unerklaerten NaN/Inf- oder Infrastrukturabbrueche",
+      "value": {
+        "fehler": [],
+        "zensiert": []
+      },
+      "passed": true
+    }
+  ],
+  "all_passed": false,
+  "terminal_cells": 6,
+  "non_terminal_cells": 0,
+  "decision": "Kein Zusatzbudget. Grenzen berichten."
+}
