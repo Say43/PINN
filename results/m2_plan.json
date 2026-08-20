@@ -1,0 +1,153 @@
+{
+  "action": "run_m2b_stage_b_dropped_no_regularization",
+  "candidates": [
+    {
+      "hardware": "p100",
+      "max_iters": 0,
+      "point_scheme": "full",
+      "projected_stage_a_hours": 0.0,
+      "regularizations": [
+        "none",
+        "double_backprop"
+      ],
+      "seconds_per_iteration_by_cell": {
+        "grand:fp32:double_backprop": 0.25712794179333287,
+        "grand:fp32:none": 0.12856397089666644,
+        "grand:fp64:double_backprop": 0.2603381828333325,
+        "grand:fp64:none": 0.13016909141666624,
+        "gread:fp32:double_backprop": 0.25712794179333287,
+        "gread:fp32:none": 0.12856397089666644,
+        "gread:fp64:double_backprop": 0.2603381828333325,
+        "gread:fp64:none": 0.13016909141666624,
+        "mlp:fp32:double_backprop": 0.08967754593333363,
+        "mlp:fp32:none": 0.044838772966666815,
+        "mlp:fp64:double_backprop": 0.08800052321999981,
+        "mlp:fp64:none": 0.044000261609999904
+      },
+      "stage_a_budget_hours": 2.0,
+      "workers": 1
+    },
+    {
+      "hardware": "2xt4",
+      "max_iters": 0,
+      "point_scheme": "full",
+      "projected_stage_a_hours": 0.0,
+      "regularizations": [
+        "none",
+        "double_backprop"
+      ],
+      "seconds_per_iteration_by_cell": {
+        "grand:fp32:double_backprop": 0.20903344676000035,
+        "grand:fp32:none": 0.10451672338000018,
+        "grand:fp64:double_backprop": 0.21452967054333327,
+        "grand:fp64:none": 0.10726483527166664,
+        "gread:fp32:double_backprop": 0.20903344676000035,
+        "gread:fp32:none": 0.10451672338000018,
+        "gread:fp64:double_backprop": 0.21452967054333327,
+        "gread:fp64:none": 0.10726483527166664,
+        "mlp:fp32:double_backprop": 0.06978549714666656,
+        "mlp:fp32:none": 0.03489274857333328,
+        "mlp:fp64:double_backprop": 0.07458601141333361,
+        "mlp:fp64:none": 0.037293005706666806
+      },
+      "stage_a_budget_hours": 2.0,
+      "workers": 1
+    },
+    {
+      "hardware": "2xt4",
+      "max_iters": 1000,
+      "point_scheme": "reduced",
+      "projected_stage_a_hours": 1.6112656960138885,
+      "regularizations": [
+        "none",
+        "double_backprop"
+      ],
+      "seconds_per_iteration_by_cell": {
+        "grand:fp32:double_backprop": 0.15849715438333323,
+        "grand:fp32:none": 0.07924857719166661,
+        "grand:fp64:double_backprop": 0.15560887989333327,
+        "grand:fp64:none": 0.07780443994666664,
+        "gread:fp32:double_backprop": 0.15849715438333323,
+        "gread:fp32:none": 0.07924857719166661,
+        "gread:fp64:double_backprop": 0.15560887989333327,
+        "gread:fp64:none": 0.07780443994666664,
+        "mlp:fp32:double_backprop": 0.0717451841733335,
+        "mlp:fp32:none": 0.03587259208666675,
+        "mlp:fp64:double_backprop": 0.07345028135999997,
+        "mlp:fp64:none": 0.03672514067999998
+      },
+      "stage_a_budget_hours": 2.0,
+      "workers": 1
+    },
+    {
+      "hardware": "2xt4",
+      "max_iters": 2000,
+      "point_scheme": "reduced",
+      "projected_stage_a_hours": 3.222531392027777,
+      "regularizations": [
+        "none",
+        "double_backprop"
+      ],
+      "seconds_per_iteration_by_cell": {
+        "grand:fp32:double_backprop": 0.15849715438333323,
+        "grand:fp32:none": 0.07924857719166661,
+        "grand:fp64:double_backprop": 0.15560887989333327,
+        "grand:fp64:none": 0.07780443994666664,
+        "gread:fp32:double_backprop": 0.15849715438333323,
+        "gread:fp32:none": 0.07924857719166661,
+        "gread:fp64:double_backprop": 0.15560887989333327,
+        "gread:fp64:none": 0.07780443994666664,
+        "mlp:fp32:double_backprop": 0.0717451841733335,
+        "mlp:fp32:none": 0.03587259208666675,
+        "mlp:fp64:double_backprop": 0.07345028135999997,
+        "mlp:fp64:none": 0.03672514067999998
+      },
+      "stage_a_budget_hours": 3.4721543456497224,
+      "workers": 1
+    },
+    {
+      "hardware": "2xt4",
+      "max_iters": 6000,
+      "point_scheme": "reduced",
+      "projected_stage_a_hours": 3.2225313920277774,
+      "regularizations": [
+        "none"
+      ],
+      "seconds_per_iteration_by_cell": {
+        "grand:fp32:none": 0.07924857719166661,
+        "grand:fp64:none": 0.07780443994666664,
+        "gread:fp32:none": 0.07924857719166661,
+        "gread:fp64:none": 0.07780443994666664,
+        "mlp:fp32:none": 0.03587259208666675,
+        "mlp:fp64:none": 0.03672514067999998
+      },
+      "stage_a_budget_hours": 3.4721543456497224,
+      "workers": 1
+    }
+  ],
+  "double_backprop_projection_factor": 2.0,
+  "minimum_max_iters": 5000,
+  "minimum_timing_repeats": 2,
+  "safety_factor": 1.0,
+  "schema_version": 2,
+  "selected": {
+    "hardware": "2xt4",
+    "max_iters": 6000,
+    "point_scheme": "reduced",
+    "projected_stage_a_hours": 3.2225313920277774,
+    "regularizations": [
+      "none"
+    ],
+    "seconds_per_iteration_by_cell": {
+      "grand:fp32:none": 0.07924857719166661,
+      "grand:fp64:none": 0.07780443994666664,
+      "gread:fp32:none": 0.07924857719166661,
+      "gread:fp64:none": 0.07780443994666664,
+      "mlp:fp32:none": 0.03587259208666675,
+      "mlp:fp64:none": 0.03672514067999998
+    },
+    "stage_a_budget_hours": 3.4721543456497224,
+    "workers": 1
+  },
+  "stage_a_profile_hours": 0.027845654350277766
+}

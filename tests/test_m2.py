@@ -1,9 +1,12 @@
 import unittest
+from pathlib import Path
 
 from bench.budget import QuotaState
-from bench.plan import make_plan
+from bench.calibrate import calibration_config
+from bench.plan import SAFETY_FACTOR, make_plan, summarize
 from kaggle.build_notebook import launcher_source
 from kaggle.runner import stage_conditions
+from src.config import ExperimentConfig
 
 
 def synthetic_rows(seconds_per_iteration: float = 0.01) -> list[dict]:
@@ -40,6 +43,38 @@ class M2Tests(unittest.TestCase):
         plan = make_plan(synthetic_rows(seconds_per_iteration=1.0))
         self.assertEqual(plan["action"], "rerun_m2a_with_reduced_points")
 
+    def test_plan_applies_full_pruning_hierarchy(self) -> None:
+        rows = synthetic_rows(seconds_per_iteration=1.0)
+        for hardware in ("p100", "2xt4"):
+            for backbone in ("mlp", "gread"):
+                for precision in ("fp32", "fp64"):
+                    for repeat in range(3):
+                        rows.append({
+                            "hardware": hardware,
+                            "point_scheme": "reduced",
+                            "backbone": backbone,
+                            "precision": precision,
+                            "seconds_per_iteration": 0.08,
+                            "repeat": repeat,
+                        })
+        plan = make_plan(rows)
+        self.assertEqual(plan["action"], "run_m2b_stage_b_dropped_no_regularization")
+        self.assertEqual(plan["selected"]["max_iters"], 5000)
+        self.assertEqual(plan["selected"]["regularizations"], ["none"])
+
+    def test_plan_uses_latest_schema_and_two_repeat_minimum(self) -> None:
+        rows = [
+            {
+                "hardware": "2xt4", "point_scheme": "full", "backbone": "gread",
+                "precision": "fp32", "seconds_per_iteration": value,
+                "schema_version": schema,
+            }
+            for schema, value in ((1, 1.0), (1, 1.1), (1, 1.2), (2, 0.1), (2, 0.2))
+        ]
+        medians = summarize(rows)
+        self.assertAlmostEqual(medians[("2xt4", "full", "gread", "fp32")], 0.15)
+        self.assertEqual(SAFETY_FACTOR, 1.0)
+
     def test_quota_guard_preserves_reserve_and_stage_limits(self) -> None:
         state = QuotaState(actual_stage_a_hours=1.9)
         self.assertFalse(state.can_start("stage_a", 0.2))
@@ -58,6 +93,7 @@ class M2Tests(unittest.TestCase):
         )
         self.assertIn("/kaggle/input/pinn-code", source)
         self.assertIn("python', '-m', 'kaggle.runner", source)
+        self.assertIn('inputs.rglob("m2_plan.json")', source)
         self.assertIn("torch==2.5.1", source)
         self.assertNotIn("class PDEGraphNet", source)
 
@@ -66,3 +102,16 @@ class M2Tests(unittest.TestCase):
             "m2a", "owner/pinn-code", "owner/pinn-results", None, "2xt4"
         )
         self.assertNotIn("download.pytorch.org", source)
+
+    def test_calibration_uses_minimal_valid_evaluation_grid(self) -> None:
+        base = ExperimentConfig.from_json(Path("configs/stage_a.json"))
+        config = calibration_config(
+            base,
+            backbone="gread",
+            precision="fp32",
+            repeat=0,
+            device="cpu",
+            point_scheme="full",
+        )
+        self.assertEqual((config.pde.evaluation_x, config.pde.evaluation_t), (3, 3))
+        self.assertGreaterEqual(config.pde.evaluation_x * config.pde.evaluation_t, config.model.graph_k + 1)

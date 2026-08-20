@@ -9,7 +9,7 @@
 | Stage A — Convection, 48 Laeufe (Seeds 1-4) | 2.0 |
 | Stage B — Allen-Cahn, 60 Laeufe | 1.5 |
 | Reserve (nicht verplanbar) | 1.0 |
-| Bereits verbraucht | 0.0 |
+| Bereits verbraucht (Kaggle-Abrechnung, seit Projektstart) | 0.57 |
 
 Die Reserve ist ausschliesslich fuer Wiederholungen nach Abstuerzen. Sie wird nicht
 fuer eine Stage C verplant.
@@ -53,6 +53,21 @@ den Guard nicht verfuegbar.
 ## Ist/Soll-Bilanz
 
 Wird nach jedem Kaggle-Run fortgeschrieben.
+
+## M2-Iststand und finales Ausfuehrungsbudget (2026-08-20)
+
+- Kaggle-Account vor Projektstart: 0.38 h; nach M2/Profiling: 0.95 h.
+  Damit sind konservativ **0.57 h** dem Projekt zugerechnet.
+- Interne Zuordnung: 0.542154 h Kalibrierung/Notebook-Overhead und 0.027846 h
+  outcome-freies Stage-A-Profiling. Die externe Abrechnung ist fuer das
+  Gesamtbudget massgeblich.
+- Die verbindliche Kuerzungshierarchie hat Stage B gestrichen und Stage A deren
+  1.5 h zugeschlagen. Double Backprop wurde danach ebenfalls gestrichen.
+- Verbleibendes Stage-A-Budget nach Profiling: **3.472154 h**.
+- Finaler Plan: 6 Zellen x 5 Seeds, 6000 Iterationen, 396 Loss-Punkte, ein T4-Worker.
+  Projektion fuer M2b plus restliche Stage A: **3.222531 h**.
+- Projektion gesamt: 0.57 + 3.222531 = **3.792531 h**. Damit bleiben 1.207469 h,
+  davon 1.0 h unantastbare Reserve und rund 0.207 h operative Marge.
 
 | Datum | Run | Stufe | Laeufe | Geschaetzt (h) | Ist (h) | Kumuliert (h) | Rest (h) |
 |---|---|---|---|---|---|---|---|

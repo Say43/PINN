@@ -12,6 +12,10 @@ def launcher_source(
     plan_dataset: str | None,
     hardware: str,
     point_scheme: str = "full",
+    calibration_backbones: tuple[str, ...] = ("mlp", "gread"),
+    calibration_precisions: tuple[str, ...] = ("fp32", "fp64"),
+    calibration_repeats: int = 3,
+    budget_stage: str = "calibration",
 ) -> str:
     mount = code_dataset.split("/", 1)[1]
     bootstrap = ""
@@ -25,18 +29,20 @@ def launcher_source(
     if mode == "m2a":
         command = [
             "python", "-m", "bench.calibrate", "--config", "configs/stage_a.json",
-            "--output", f"/kaggle/working/m2a_{hardware}_{point_scheme}.jsonl",
+            "--output", f"/kaggle/working/m2a_v2_{hardware}_{point_scheme}.jsonl",
             "--hardware-label", hardware,
             "--workers", "1", "--device", "cuda:0", "--point-scheme", point_scheme,
+            "--backbones", *calibration_backbones,
+            "--precisions", *calibration_precisions,
+            "--repeats", str(calibration_repeats), "--budget-stage", budget_stage,
             "--results-dataset", results_dataset,
         ]
     else:
         if plan_dataset is None:
             raise ValueError("non-M2a notebooks require --plan-dataset")
-        plan_mount = plan_dataset.split("/", 1)[1]
         command = [
             "python", "-m", "kaggle.runner", "--stage", mode, "--config", config,
-            "--plan", f"/kaggle/input/{plan_mount}/m2_plan.json",
+            "--plan", "__M2_PLAN__",
         ]
     return f'''import os, shutil, subprocess, sys, zipfile
 from pathlib import Path
@@ -59,7 +65,13 @@ for archive in mounted.glob("*.zip"):
 os.chdir(root)
 sys.path.insert(0, str(root))
 os.environ["PINN_RESULTS_DATASET"] = "{results_dataset}"
-subprocess.run({command!r}, check=True)
+command = {command!r}
+if "__M2_PLAN__" in command:
+    plan_paths = list(inputs.rglob("m2_plan.json"))
+    if len(plan_paths) != 1:
+        raise RuntimeError(f"Expected one M2 plan, found {{len(plan_paths)}}")
+    command = [str(plan_paths[0]) if value == "__M2_PLAN__" else value for value in command]
+subprocess.run(command, check=True)
 '''
 
 
@@ -71,6 +83,18 @@ def main() -> None:
     parser.add_argument("--plan-dataset", help="owner/slug containing m2_plan.json")
     parser.add_argument("--hardware", choices=("p100", "2xt4"), default="p100")
     parser.add_argument("--point-scheme", choices=("full", "reduced"), default="full")
+    parser.add_argument(
+        "--calibration-backbones", nargs="+", choices=("mlp", "gread"),
+        default=["mlp", "gread"],
+    )
+    parser.add_argument(
+        "--calibration-precisions", nargs="+", choices=("fp32", "fp64"),
+        default=["fp32", "fp64"],
+    )
+    parser.add_argument("--calibration-repeats", type=int, default=3)
+    parser.add_argument(
+        "--budget-stage", choices=("calibration", "stage_a"), default="calibration"
+    )
     parser.add_argument("--kernel-id", required=True, help="owner/kernel-slug")
     parser.add_argument("--output-dir", type=Path, default=Path("kaggle/generated"))
     args = parser.parse_args()
@@ -84,7 +108,9 @@ def main() -> None:
                 "outputs": [],
                 "source": [line + "\n" for line in launcher_source(
                     args.mode, args.code_dataset, args.results_dataset,
-                    args.plan_dataset, args.hardware, args.point_scheme
+                    args.plan_dataset, args.hardware, args.point_scheme,
+                    tuple(args.calibration_backbones), tuple(args.calibration_precisions),
+                    args.calibration_repeats, args.budget_stage,
                 ).splitlines()],
             }
         ],
@@ -111,10 +137,10 @@ def main() -> None:
         "is_private": True,
         "enable_gpu": True,
         "enable_internet": True,
-        "dataset_sources": [
+        "dataset_sources": list(dict.fromkeys(
             source for source in (args.code_dataset, args.results_dataset, args.plan_dataset)
             if source is not None
-        ],
+        )),
         "competition_sources": [],
         "kernel_sources": [],
     }

@@ -37,6 +37,9 @@ def calibration_config(
     point_scheme: str,
 ) -> ExperimentConfig:
     raw = base.to_dict()
+    # M2a measures optimizer-loop cost, not the fixed 101x101 evaluation cost.
+    # A 3x3 grid is the smallest valid graph evaluation for graph_k=8.
+    raw["pde"].update(evaluation_x=3, evaluation_t=3)
     if point_scheme == "reduced":
         raw["pde"].update(domain_points=196, boundary_points=100, initial_points=100)
     raw["model"]["backbone"] = backbone
@@ -60,11 +63,25 @@ def main() -> None:
     parser.add_argument("--workers", type=int, choices=(1, 2), required=True)
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--point-scheme", choices=("full", "reduced"), default="full")
+    parser.add_argument(
+        "--backbones", nargs="+", choices=CALIBRATION_BACKBONES,
+        default=list(CALIBRATION_BACKBONES),
+    )
+    parser.add_argument(
+        "--precisions", nargs="+", choices=CALIBRATION_PRECISIONS,
+        default=list(CALIBRATION_PRECISIONS),
+    )
+    parser.add_argument("--repeats", type=int, default=3)
+    parser.add_argument(
+        "--budget-stage", choices=("calibration", "stage_a"), default="calibration"
+    )
     parser.add_argument("--results-dataset", help="private owner/slug for per-repeat persistence")
     parser.add_argument(
         "--quota-state", type=Path, default=Path("/kaggle/working/quota_state.json")
     )
     args = parser.parse_args()
+    if args.repeats < 1:
+        raise ValueError("--repeats must be positive")
     if not torch.cuda.is_available():
         raise RuntimeError("M2a requires a Kaggle GPU")
     visible = [torch.cuda.get_device_name(index) for index in range(torch.cuda.device_count())]
@@ -88,9 +105,9 @@ def main() -> None:
                     row = json.loads(line)
                     completed.add((row["backbone"], row["precision"], row["repeat"]))
                     observed_hours.append(float(row["wall_seconds"]) / 3600.0)
-    for backbone in CALIBRATION_BACKBONES:
-        for precision in CALIBRATION_PRECISIONS:
-            for repeat in range(3):
+    for backbone in args.backbones:
+        for precision in args.precisions:
+            for repeat in range(args.repeats):
                 if (backbone, precision, repeat) in completed:
                     continue
                 config = calibration_config(
@@ -102,20 +119,23 @@ def main() -> None:
                     point_scheme=args.point_scheme,
                 )
                 conservative_hours = max([0.05, *(1.25 * value for value in observed_hours)])
-                if not quota.can_start("calibration", conservative_hours):
+                if not quota.can_start(args.budget_stage, conservative_hours):
                     raise RuntimeError(
-                        "calibration quota guard stopped before the next probe; "
+                        f"{args.budget_stage} quota guard stopped before the next probe; "
                         f"estimate={conservative_hours:.4f} h"
                     )
                 started = time.perf_counter()
                 result = train_once(config)
                 elapsed = time.perf_counter() - started
                 elapsed_hours = elapsed / 3600.0
+                training_seconds = float(result.values["wall_seconds"])
                 observed_hours.append(elapsed_hours)
                 row = {
-                    "schema_version": 1,
+                    "schema_version": 2,
                     "stage": "m2a",
                     "throwaway": True,
+                    "budget_stage": args.budget_stage,
+                    "timing_scope": "optimizer_loop_with_3x3_evaluation",
                     "hardware": args.hardware_label,
                     "workers": args.workers,
                     "point_scheme": args.point_scheme,
@@ -124,14 +144,15 @@ def main() -> None:
                     "regularization": "none",
                     "repeat": repeat,
                     "iterations": 300,
-                    "wall_seconds": elapsed,
-                    "seconds_per_iteration": elapsed / 300.0,
+                    "wall_seconds": training_seconds,
+                    "session_wall_seconds": elapsed,
+                    "seconds_per_iteration": training_seconds / 300.0,
                     "function_evaluations": result.values["function_evaluations"],
                     "parameter_count": result.values["parameter_count"],
                     "visible_gpus": visible,
                 }
                 append_jsonl(args.output, row)
-                quota.record("calibration", elapsed_hours)
+                quota.record(args.budget_stage, elapsed_hours)
                 quota.save(args.quota_state)
                 if publisher is not None:
                     publisher.publish_files(

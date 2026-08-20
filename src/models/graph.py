@@ -71,30 +71,37 @@ class DiffusionMixingLayer(nn.Module):
         self.reaction = reaction
         self.step_size = step_size
 
-    def _diffusion(
+    @staticmethod
+    def _fused_linear(
+        values: torch.Tensor,
+        modules: tuple[nn.Linear, ...],
+    ) -> tuple[torch.Tensor, ...]:
+        weight = torch.cat([module.weight for module in modules], dim=0)
+        bias = torch.cat([module.bias for module in modules], dim=0)
+        projected = F.linear(values, weight, bias)
+        return projected.split(modules[0].out_features, dim=-1)
+
+    def _diffusion_from_projections(
         self,
-        live: torch.Tensor,
-        context: torch.Tensor,
+        query: torch.Tensor,
+        key: torch.Tensor,
+        neighbor_value: torch.Tensor,
+        self_value: torch.Tensor,
         topology: GraphTopology,
     ) -> torch.Tensor:
-        query = self.query(live).unsqueeze(1)
-        key = self.key(context)[topology.neighbors]
-        value = self.value(context)[topology.neighbors]
-        scores = (query * key).sum(dim=-1) / math.sqrt(live.shape[-1])
+        scores = (query.unsqueeze(1) * key).sum(dim=-1) / math.sqrt(query.shape[-1])
         scores = scores.masked_fill(~topology.mask, torch.finfo(scores.dtype).min)
         attention = torch.softmax(scores, dim=1)
-        aggregate = (attention.unsqueeze(-1) * value).sum(dim=1)
-        self_value = self.value(live)
+        aggregate = (attention.unsqueeze(-1) * neighbor_value).sum(dim=1)
         return self.output(aggregate - self_value)
 
-    def _advance(
+    def _advance_from_diffusion(
         self,
         live: torch.Tensor,
-        context: torch.Tensor,
-        topology: GraphTopology,
+        diffusion: torch.Tensor,
     ) -> torch.Tensor:
         diffusivity = F.softplus(self.log_diffusivity)
-        derivative = diffusivity * self._diffusion(live, context, topology)
+        derivative = diffusivity * diffusion
         if self.reaction:
             bounded = torch.tanh(live)
             reaction_rate = F.softplus(self.log_reaction)
@@ -107,8 +114,28 @@ class DiffusionMixingLayer(nn.Module):
         context: torch.Tensor,
         topology: GraphTopology,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        next_live = self._advance(live, context, topology)
-        next_context = self._advance(context, context, topology)
+        context_query, context_key, context_value = self._fused_linear(
+            context, (self.query, self.key, self.value)
+        )
+        live_query, live_value = self._fused_linear(live, (self.query, self.value))
+        context_key = context_key[topology.neighbors]
+        neighbor_value = context_value[topology.neighbors]
+        live_diffusion = self._diffusion_from_projections(
+            live_query,
+            context_key,
+            neighbor_value,
+            live_value,
+            topology,
+        )
+        context_diffusion = self._diffusion_from_projections(
+            context_query,
+            context_key,
+            neighbor_value,
+            context_value,
+            topology,
+        )
+        next_live = self._advance_from_diffusion(live, live_diffusion)
+        next_context = self._advance_from_diffusion(context, context_diffusion)
         return next_live, next_context
 
 

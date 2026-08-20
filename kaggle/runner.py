@@ -12,11 +12,11 @@ from src.config import ExperimentConfig
 from src.train import run
 
 
-def stage_conditions(stage: str):
+def stage_conditions(stage: str, regularizations: tuple[str, ...] = ("none", "double_backprop")):
     seeds = (0,) if stage == "m2b" else ((1, 2, 3, 4) if stage == "stage_a" else (0, 1, 2, 3, 4))
     for backbone in ("mlp", "grand", "gread"):
         for precision in ("fp32", "fp64"):
-            for regularization in ("none", "double_backprop"):
+            for regularization in regularizations:
                 for seed in seeds:
                     yield backbone, precision, regularization, seed
 
@@ -54,7 +54,13 @@ def main() -> None:
     if not handle:
         raise RuntimeError("PINN_RESULTS_DATASET must name the private durable results Dataset")
     plan = json.loads(args.plan.read_text(encoding="utf-8"))
-    if plan["action"] not in {"run_m2b", "run_m2b_reduced_points"}:
+    executable_actions = {
+        "run_m2b",
+        "run_m2b_reduced_points",
+        "run_m2b_stage_b_dropped",
+        "run_m2b_stage_b_dropped_no_regularization",
+    }
+    if plan["action"] not in executable_actions:
         raise RuntimeError(f"plan is not executable: action={plan['action']}")
     publisher = KagglePublisher(handle)
     database = Path("/kaggle/working/results/results.sqlite")
@@ -62,8 +68,16 @@ def main() -> None:
     publisher.restore(database, backup, args.quota_state)
     base = apply_plan(ExperimentConfig.from_json(args.config), plan, args.stage)
     quota = QuotaState.load(args.quota_state)
-    budget_stage = "calibration" if args.stage == "m2b" else args.stage
-    queue = list(stage_conditions(args.stage))
+    selected = plan["selected"]
+    quota.stage_a_limit_hours = max(
+        quota.stage_a_limit_hours, float(selected.get("stage_a_budget_hours", 2.0))
+    )
+    stage_b_dropped = "stage_b_dropped" in plan["action"]
+    budget_stage = "stage_a" if args.stage == "m2b" and stage_b_dropped else (
+        "calibration" if args.stage == "m2b" else args.stage
+    )
+    regularizations = tuple(selected.get("regularizations", ("none", "double_backprop")))
+    queue = list(stage_conditions(args.stage, regularizations))
     queue.sort(key=lambda item: (estimated_hours(plan, item[0], item[1], item[2]), item))
     for backbone, precision, regularization, seed in queue:
         estimate = estimated_hours(plan, backbone, precision, regularization)

@@ -98,3 +98,57 @@ Abweichungen von der Literatur**, die vor dem Einfrieren bewusst getroffen wurde
 - **Ergebnisse gesichtet:** nein; keine Kaggle- oder Studienlaeufe gestartet,
   GPU-Verbrauch weiterhin 0.0 h.
 - **Commit:** `0195568` (`Complete M1 pipeline and prepare safe Kaggle M2`).
+
+## D-2 — Pascal-kompatibles PyTorch fuer die P100-Probe
+- **Datum:** 2026-08-20
+- **Vorher:** Kaggle-Standardimage mit PyTorch 2.10.0+cu128.
+- **Nachher:** Fuer P100 wird vor M2a das offizielle Wheel PyTorch 2.5.1+cu121
+  installiert und in einem separaten Prozess geprueft.
+- **Begruendung:** Das Standardimage enthaelt keine `sm_60`-Kernels. Der private,
+  datenfreie Test bestaetigte P100, `sm_60` und eine echte CUDA-Matrixmultiplikation.
+- **Ergebnisse gesichtet:** keine Studienergebnisse; nur Kompatibilitaets- und Zeiten.
+- **Artefakt:** `p100_compatibility.json` im privaten Results-Dataset.
+
+## D-3 — M2a-v2 trennt Trainingszeit von fixer Endauswertung
+- **Datum:** 2026-08-20
+- **Vorher:** Aeussere `train_once`-Zeit geteilt durch 300; darin lagen zwei
+  Zwischen- und eine Endauswertung.
+- **Nachher:** 3x3-Auswertungsgitter in M2a, Zeit aus dem internen Optimizer-Loop;
+  aeussere Sessionzeit bleibt die Quota-Groesse. Neue Dateien tragen Schema 2.
+- **Begruendung:** Fixe 101x101-Auswertungskosten duerfen nicht proportional auf
+  5000+ Iterationen extrapoliert werden. M2a ist Wegwerf-Timing; M2b war noch nicht
+  gestartet.
+- **Wiederholungen:** Der Quota-Guard stoppte T4/full nach 11/12 Zeilen. Nur
+  GREAD/FP64 hat zwei statt drei Wiederholungen (0.1053 und 0.1093 s/Iteration).
+  Der Planer verlangt deshalb mindestens zwei Wiederholungen und kennzeichnet dies.
+- **Ergebnisse gesichtet:** ausschliesslich Laufzeiten, keine Studienfehler.
+
+## D-4 — Nicht praeregistrierten Faktor 1.25 aus der Iterationsformel entfernt
+- **Datum:** 2026-08-20
+- **Vorher:** `bench/plan.py` multiplizierte die eingefrorene Budgetformel mit 1.25.
+- **Nachher:** Faktor 1.0, exakt wie in `PREREGISTRATION.md` Abschnitt 4 festgelegt.
+- **Begruendung:** Der zusaetzliche Faktor war weder praeregistriert noch in
+  `HANDOFF.md`, `BUDGET.md` oder dem Ausfuehrungsvertrag festgelegt. Die Reserve
+  bleibt separat unantastbar.
+- **Ergebnisse gesichtet:** nur M2a-Zeiten, keine Studienergebnisse.
+
+## D-5 — Semantisch identische Graphprojektionen fusioniert
+- **Datum:** 2026-08-20
+- **Aenderung:** Identische `query/key/value`-Projektionen eines Forward-Passes
+  werden einmal berechnet; Q/K/V werden mit unveraenderten Parametern als blockweise
+  lineare Operation ausgefuehrt und danach geteilt.
+- **Validierung:** FP64-Ausgaben, Koordinaten- und Parametergradienten stimmen mit
+  der vorherigen Formel bis 1e-12 ueberein; alle Trainerfamilien-Tests sind gruen.
+  CPU-Mikrobenchmark: etwa 1.20x.
+- **Profiling:** Vier outcome-freie T4-Zellen (GREAD x FP32/FP64 x zwei Repeats)
+  wurden transparent Stage A belastet, nicht der ausgeschoepften Kalibrierung.
+- **Ergebnisse gesichtet:** keine Studienergebnisse.
+
+## D-6 — Finale outcome-freie M2-Kuerzung
+- **Datum:** 2026-08-20
+- **Angewandte Reihenfolge:** 396 Punkte; danach Stage B streichen und 1.5 h Stage A
+  zuschlagen; danach Regularisierung auf `none` reduzieren.
+- **Final:** T4, ein Worker, 6000 Iterationen, 6 Zellen x 5 Seeds. Praezision und
+  Seedzahl bleiben unangetastet.
+- **Begruendung:** Exakte Anwendung der eingefrorenen Kuerzungshierarchie auf die
+  Timingdaten; keine Fehler-, Loss- oder Erfolgswerte wurden verwendet.

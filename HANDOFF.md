@@ -1,3 +1,20 @@
+# Uebergabe-Nachtrag nach M2a (2026-08-20)
+
+Dieser Abschnitt ersetzt fuer den aktuellen Ausfuehrungsstand alle darunter
+stehenden historischen Statusangaben.
+
+- M2a und outcome-freies Zusatzprofiling sind abgeschlossen. Noch keine
+  Studienergebnisse; M2b wurde nicht gestartet.
+- Kaggle privat: `says43/pinn-pde-attention-code`,
+  `says43/pinn-pde-attention-results`.
+- Dem Projekt zugerechnete Kaggle-Abrechnung: 0.57 h von 5.0 h.
+- Finaler Plan: 2x T4, ein Worker, reduziertes 396-Punkte-Schema, Stage B gestrichen,
+  nur `regularization=none`, 6000 Iterationen, 6 Zellen x 5 Seeds.
+- M2b umfasst damit 6 Seed-0-Laeufe; danach **vor Stage A anhalten und berichten**.
+- P100 ist nur mit offiziellem PyTorch 2.5.1+cu121 (`sm_60`) lauffaehig, war aber
+  langsamer als T4. Details und outcome-freie Entscheidungen: `DEVIATIONS.md` D-2
+  bis D-6.
+
 # Übergabe an GPT Sol
 
 > **AKTUELLER NACHTRAG — ersetzt den darunter stehenden historischen M0-Stand.**
