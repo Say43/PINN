@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+*.log
+results/*.sqlite-journal
+results/raw/
+analysis/figures/*.png
+!analysis/figures/.gitkeep
+.DS_Store
