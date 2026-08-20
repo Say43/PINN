@@ -20,7 +20,7 @@ class TrainingTests(unittest.TestCase):
                         ):
                             reference_path = "data/allen_cahn.mat" if pde_name == "allen_cahn" else None
                             config = ExperimentConfig(
-                                pde=PDEConfig(
+                                pde=PDEConfig(allow_underresolved=True, 
                                     name=pde_name,
                                     domain_points=9,
                                     boundary_points=3,
@@ -55,7 +55,7 @@ class TrainingTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             tmp_path = Path(directory)
             config = ExperimentConfig(
-                pde=PDEConfig(
+                pde=PDEConfig(allow_underresolved=True, 
                     domain_points=4,
                     boundary_points=2,
                     initial_points=2,

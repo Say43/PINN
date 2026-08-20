@@ -21,7 +21,7 @@ SEEDS = (0, 1, 2, 3, 4)
 
 def measure_unweighted_terms(seed: int) -> tuple[float, float]:
     config = ExperimentConfig(
-        pde=PDEConfig(
+        pde=PDEConfig(allow_underresolved=True, 
             name="convection",
             domain_points=100,
             boundary_points=50,

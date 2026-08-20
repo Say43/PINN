@@ -24,6 +24,11 @@ class PDEConfig:
     diffusion: float = 1.0e-4
     reaction: float = 5.0
     reference_path: str | None = None
+    # Nur fuer Tests und Smoke-Laeufe. Studienlaeufe muessen die
+    # Aufloesungspruefung bestehen (src/pdes/resolution.py, FINDINGS.md §2).
+    # Der Wert steht im config_json jedes Laufs, damit eine gesetzte Ausnahme
+    # niemals unbemerkt als Studienevidenz durchgeht.
+    allow_underresolved: bool = False
 
     def __post_init__(self) -> None:
         for key in ("domain_points", "boundary_points", "initial_points"):

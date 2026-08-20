@@ -13,6 +13,7 @@ from src.pdes.base import (
     mean_square,
     pointwise_gradient,
 )
+from src.pdes.resolution import convection_resolution, require_convection_resolution
 
 
 def _rectangular_grid(
@@ -37,6 +38,16 @@ class ConvectionPDE(PDE):
     def __init__(self, config: PDEConfig) -> None:
         super().__init__(config)
         self.beta = config.beta
+        # Harte Vorbedingung, keine Warnung: ein unteraufgeloestes Gitter
+        # produziert technisch fehlerfreie Laeufe mit sinnlosen Ergebnissen.
+        if config.allow_underresolved:
+            self.resolution = convection_resolution(
+                config.domain_points, beta=config.beta
+            )
+        else:
+            self.resolution = require_convection_resolution(
+                config.domain_points, beta=config.beta
+            )
 
     def collocation(self) -> CollocationBatch:
         domain = _rectangular_grid(

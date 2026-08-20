@@ -6,7 +6,8 @@
     "initial_points": 18,
     "evaluation_x": 31,
     "evaluation_t": 31,
-    "beta": 50.0
+    "beta": 50.0,
+    "allow_underresolved": true
   },
   "model": {
     "backbone": "mlp",

@@ -19,14 +19,16 @@ class ExactConvection(torch.nn.Module):
 
 class PDETests(unittest.TestCase):
     def test_convection_exact_solution_has_near_zero_loss(self) -> None:
-        config = PDEConfig(name="convection", domain_points=25, boundary_points=8, initial_points=8)
+        config = PDEConfig(
+            allow_underresolved=True,
+            name="convection", domain_points=25, boundary_points=8, initial_points=8)
         pde = ConvectionPDE(config)
         batch = pde.collocation().to(device="cpu", dtype=torch.float64)
         loss = pde.loss(ExactConvection(config.beta), batch, None, "none", 0.0)
         self.assertLess(float(loss.total), 1.0e-20)
 
     def test_allen_cahn_point_accounting_and_initial_derivative(self) -> None:
-        config = PDEConfig(name="allen_cahn", domain_points=4096, boundary_points=100, initial_points=100)
+        config = PDEConfig(allow_underresolved=True, name="allen_cahn", domain_points=4096, boundary_points=100, initial_points=100)
         pde = AllenCahnPDE(config)
         batch = pde.collocation()
         self.assertEqual(len(batch.coords), 4396)
@@ -36,7 +38,7 @@ class PDETests(unittest.TestCase):
         self.assertTrue(torch.allclose(derivative, pde.initial_condition_dx(x), atol=1.0e-12))
 
     def test_allen_cahn_reference_matches_initial_condition(self) -> None:
-        config = PDEConfig(
+        config = PDEConfig(allow_underresolved=True, 
             name="allen_cahn",
             domain_points=4,
             boundary_points=2,
