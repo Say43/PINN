@@ -1192,7 +1192,7 @@ gelesen. Insbesondere:
 | Hidden-Dim, Integrationszeit T je Datensatz | GRAND | nicht extrahiert (Appendix) |
 | T = 1 für Convection im Haupttext | KP21 | nur indirekt über Fußnote 4 |
 
-### Layout-Rekonstruktionen (vor Implementierung im Original-PDF gegenprüfen)
+### Layout-Rekonstruktionen (Status der Sichtprüfung)
 
 Die folgenden Tabellen wurden aus `pdftotext -layout`-Ausgaben rekonstruiert, in denen
 die Zeilenlabels gegen die Zahlenspalten verschoben waren. Die Zuordnung ist jeweils
@@ -1202,7 +1202,9 @@ begründet, aber nicht durch Bildansicht bestätigt:
 - **KP21 Tab. 2** (ν = 2…6) — unabhängig bestätigt durch Haupttext (ν=2 → 50 %,
   ν=5 → 93 %). Hohe Sicherheit.
 - **KP21 Tab. E.1, E.2** — Plausibilität: monoton steigender Fehler.
-- **AM26 Tab. 1** — unabhängig bestätigt: die PINN_FP64-Zeilen sind mit FP64 Tab. 1
-  wertidentisch. Hohe Sicherheit.
+- **AM26 Tab. 1** — am Original-PDF geprüft (2026-08-20) und zusätzlich unabhängig
+  bestätigt: die PINN_FP64-Zeilen sind mit FP64 Tab. 1 wertidentisch. Die
+  Allen-Cahn-Summe 4396 ist korrekt: 4096 Domain + 100 IC + 100 Residuen für
+  u-Periodizität + 100 Residuen für u_x-Periodizität. Hohe Sicherheit.
 - **EG23 Tab. 6, 7** — Zuordnung typkonsistent (nur eine Zuordnung ergibt „Activation:
   Tanh" statt „Activation: 2.0").

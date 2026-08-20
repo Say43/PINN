@@ -36,7 +36,10 @@ beide Optionen mit je einer FP32- und einer FP64-Zelle.
 Bei 2x T4 laeuft der Runner mit zwei Workern (`CUDA_VISIBLE_DEVICES=0` / `=1`), da
 Kaggle Session-Wallclock zaehlt und nicht Device-Stunden. Bei P100 mit einem Worker.
 
-Der Smoke-Test laeuft lokal auf CPU/1660 Ti und belastet das GPU-Quota nicht.
+Der Smoke-Test laeuft lokal auf CPU und belastet das GPU-Quota nicht. Die lokale
+1660 Ti darf nur fuer kurze Korrektheitstests bzw. die outcome-blinde lambda_r-
+Skalierung mit harter Laufzeitgrenze unter drei Minuten verwendet werden; sie
+rechnet keinen Studienarm.
 
 ## Quota-Guard
 

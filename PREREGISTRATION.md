@@ -1,14 +1,13 @@
 # Präregistrierung — PDE-strukturierte Attention in PINNs
 
-**Status: ENTWURF v3 (M0), NICHT eingefroren.** Fassung nach der Budget-Neuskalierung
-auf 5 GPU-h und nach Einarbeitung von `docs/baselines.md` (lit-agent, 2026-08-20).
-`docs/baselines.md` liegt vor. Fehlt zum Einfrieren nur noch die Freigabe der
-Projektleitung. Ab dem Einfrieren gilt: keine Änderung mehr an
-diesem Dokument; jede Abweichung wandert nach `DEVIATIONS.md` mit Datum, Begründung
-und der Angabe, ob die betroffenen Ergebnisse zum Zeitpunkt der Änderung bereits
-gesichtet waren.
+**Status: EINGEFROREN v3 (M0).** Fassung nach der Budget-Neuskalierung auf 5 GPU-h,
+der Einarbeitung von `docs/baselines.md` und der Projektfreigabe vom 2026-08-20.
+Ab jetzt gilt: keine inhaltliche Änderung mehr an diesem Dokument; jede Abweichung
+wandert nach `DEVIATIONS.md` mit Datum, Begründung und der Angabe, ob die betroffenen
+Ergebnisse zum Zeitpunkt der Änderung bereits gesichtet waren.
 
-Eingefroren am: _(offen)_ · Git-Commit beim Einfrieren: _(offen)_
+Eingefroren am: **2026-08-20** · Freeze-Commit und SHA-256: siehe
+`PREREGISTRATION.lock.json` und Git-Tag `prereg-v3`.
 
 ---
 
@@ -131,15 +130,23 @@ bräuchte", mit Stundenschätzung aus der Kalibrierung.
 
 ### Kürzungsreihenfolge bei Budgetmangel (vorab, verbindlich)
 
-1. **Stage B streichen** (nur Convection, dafür vollständige Statistik)
-2. Regularisierung auf nur `none` reduzieren
+1. Einmalig auf das vorab definierte, für alle Backbones/Präzisionen/
+   Regularisierungen einer PDE identische **50-%-Punktschema** wechseln:
+   Convection 14×14 Domänenpunkte + 100 BC-Residualpaare + 100 IC-Punkte
+   (396 Loss-Punkte); Allen–Cahn 45×45 Domänenpunkte + je 50 Punkte für
+   u-Periodizität, u_x-Periodizität und IC (2 175 Loss-Punkte).
+2. Falls die Projektion damit weiterhin `max_iters < 5000` ergibt: **Stage B
+   streichen** und deren 1.5 h dem vollständigen Stage-A-Design zuschlagen.
+3. Falls selbst Stage A damit nicht mindestens 5000 Iterationen erhält:
+   Regularisierung auf nur `none` reduzieren.
 
 **Präzision und Seed-Zahl bleiben unangetastet.** Präzision ist der Kern von H0,
 und unter 5 Seeds ist keine Streuungsaussage mehr möglich.
 
-Hinweis zur Umkehrung gegenüber v1: In v1 stand die PDE-Achse ganz oben auf der
-Kürzungsliste. Sie steht jetzt unten, weil die PDE-Achse hier den Mechanismus
-trägt (Doppeldissoziation) und nicht bloß die Generalisierung.
+Die Punktreduktion kommt vor dem Streichen von Stage B, weil die PDE-Achse den
+Mechanismustest (Doppeldissoziation) trägt. Sie wird ausschließlich aus M2a-Zeiten,
+nie anhand beobachteter Fehler, ausgelöst. Dadurch bleibt sie eine Budgetentscheidung
+und kein outcome-basiertes Cherry-Picking.
 
 ### Fairness-Auflagen
 
@@ -170,17 +177,17 @@ Regularisierung **weniger** Punkte besser sind.
 
 Gewählt wird das **AM26-Schema**, Gitter, für beide PDEs:
 
-| PDE | Domäne | Rand (je Seite) | IC | Gesamt |
-|---|---|---|---|---|
-| Convection | 400 | 200 | 200 | 800 |
-| Allen–Cahn | 4 096 | 100 | 100 | 4 296 |
+| PDE | Domäne | BC-Residualfamilien | IC | Gesamt |
+|---|---:|---:|---:|---:|
+| Convection | 400 | 1 × 200 | 200 | 800 |
+| Allen–Cahn | 4 096 | 2 × 100 | 100 | 4 396 |
 
 Begründung: es ist das Schema der Quelle, aus der der Double-Backprop-Arm stammt, und
 es ist um eine Größenordnung billiger als 101×101 — bei 5 GPU-h der Unterschied
-zwischen „Studie" und „keine Studie". Die AM26-Tabelle nennt für Allen–Cahn eine
-Gesamtzahl von 4 396; 4 096 + 100 + 100 ergibt 4 296. Die Differenz von 100 ist eine
-offene Unstimmigkeit der Layout-Rekonstruktion und wird vor dem ersten Kaggle-Run am
-Original-PDF geprüft (`docs/baselines.md`, Abschnitt „Layout-Rekonstruktionen").
+zwischen „Studie" und „keine Studie". Die scheinbare 4-396/4-296-Unstimmigkeit ist
+am Original-PDF aufgelöst: Allen–Cahn hat neben der IC zwei getrennte periodische
+Residualfamilien, für u und u_x. AM26 §4.3 nennt 4 096 Domänenpunkte und jeweils 100
+Punkte; Tabelle 1 zählt daher 4 096 + 100 + 100 + 100 = 4 396 Loss-Punkte.
 
 Identische Punkte für alle Bedingungen innerhalb einer PDE.
 
@@ -309,11 +316,16 @@ der Domäne, ∇_t B am Rand, ∇_x I auf der IC, Vorfaktor λ_r/2, Basisgewicht
 λ_F = λ_B = λ_I = 1). **Der Wert von λ_r ist im Paper nirgends angegeben**, auch
 nicht im Appendix.
 
-Festlegung: λ_r wird durch einen kleinen Grid λ_r ∈ {1e-4, 1e-3, 1e-2, 1e-1, 1}
-**auf der lokalen GPU** (Convection, FP32, reduzierte Punktzahl) bestimmt, auf den
-besten Wert eingefroren und danach **für alle Bedingungen identisch** verwendet.
-Kein Kaggle-Quota, kein bedingungsspezifisches Tuning. Der gewählte Wert und der
-Grid werden in `DEVIATIONS.md` festgehalten.
+Festlegung: λ_r wird aus dem Grid λ_r ∈ {1e-4, 1e-3, 1e-2, 1e-1, 1} einmalig auf
+Convection/MLP/FP32 mit 100 Domänen-, 50 BC- und 50 IC-Punkten bestimmt. Die Auswahl
+ist **outcome-blind**: Für Seeds 0–4 werden vor dem Training Basisloss L_0 und der
+ungewichtete Double-Backprop-Penalty P berechnet. Gewählt wird der Gridwert, dessen
+Median von `(λ_r/2)·P / L_0` am nächsten bei 0.1 liegt; bei Gleichstand der kleinere
+Wert. Referenzlösung, relativer L2-Fehler und Trainingsverlauf werden dabei nicht
+verwendet. Danach gilt derselbe Wert für alle Bedingungen. Die Berechnung läuft
+lokal, bevorzugt auf CPU; eine lokale GPU darf nur mit harter Laufzeitgrenze unter
+drei Minuten verwendet werden. Sie erzeugt keine Studiendaten und verbraucht kein
+Kaggle-Quota. Der gewählte Wert wird in `DEVIATIONS.md` L-7 ergänzt.
 
 Kostenhinweis: Double Backprop verdoppelt die Gradientenrechnung (AM26 §4.3). Das
 ist in der Kalibrierung bereits enthalten, weil `double_backprop` eine eigene Zelle
@@ -394,12 +406,11 @@ wird Stage B nicht gefahren. Es wird als Null-Resultat berichtet und das
 Restbudget in zusätzliche Seeds auf Stage A investiert (Präzision der
 Effektschätzung statt Breite).
 
-**Hardware-Konfundierung — ausgeschlossen.** Die lokale GTX 1660 Ti wird für
-Korrektheitstests, Debugging und grobe Kostenrangfolge der Backbones genutzt. Sie
-wird **unter keinen Umständen** benutzt, um den FP32-Arm zu rechnen, während der
-FP64-Arm auf Kaggle läuft. Präzision und Hardware dürfen nicht konfundiert werden —
-das wäre exakt der Fehler, den diese Studie anderen nachweist. Alle in die
-Auswertung eingehenden Läufe stammen von derselben Kaggle-Hardware.
+**Hardware-Konfundierung — ausgeschlossen.** Lokal laufen nur Korrektheitstests,
+Debugging, grobe Kostenrangfolgen und die outcome-blinde λ_r-Skalierung. Die lokale
+GTX 1660 Ti darf dafür höchstens drei Minuten am Stück verwendet werden und rechnet
+**unter keinen Umständen** einen Arm der Matrix. Alle in die Auswertung eingehenden
+Läufe stammen von derselben, in M2a gewählten Kaggle-Hardware.
 
 ## 8. Was das Projekt nicht ist
 

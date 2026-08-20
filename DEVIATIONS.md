@@ -55,8 +55,23 @@ Abweichungen von der Literatur**, die vor dem Einfrieren bewusst getroffen wurde
 
 ## L-7 — lambda_r wird selbst bestimmt
 - **Gegen:** nichts; AM26 gibt den Wert schlicht nicht an (auch nicht im Appendix)
-- **Gewaehlt:** Grid {1e-4, 1e-3, 1e-2, 1e-1, 1} lokal auf Convection/FP32, danach
-  eingefroren und fuer alle Bedingungen identisch
-- **Begruendung:** ohne Wert nicht implementierbar. Lokal, also ohne Quota; einmal
-  bestimmt, also kein bedingungsspezifisches Tuning.
+- **Gewaehlt:** Grid {1e-4, 1e-3, 1e-2, 1e-1, 1} einmalig auf
+  Convection/MLP/FP32 mit 100 Domain-, 50 BC- und 50 IC-Punkten. Fuer Seeds 0-4
+  wird vor dem Training das Verhaeltnis `(lambda_r/2)*P/L_0` berechnet; gewaehlt
+  wird der Gridwert mit Median am naechsten zu 0.1, bei Gleichstand der kleinere.
+  Referenzfehler und Trainingsverlauf bleiben ungenutzt. Danach gilt der Wert fuer
+  alle Bedingungen identisch.
+- **Begruendung:** ohne Wert nicht implementierbar. Die loss-skalierte,
+  outcome-blinde Regel verhindert ein Tuning auf die Zielmetrik und ist lokal ohne
+  Kaggle-Quota ausfuehrbar. Eine lokale GPU darf nur unter einer harten
+  Drei-Minuten-Grenze verwendet werden.
 - **Offen:** der gewaehlte Wert ist noch einzutragen.
+
+## L-8 — Budgetkuerzung reduziert Punkte vor dem Streichen von Allen-Cahn
+- **Gegen:** AM26-Punktzahlen 800 (Convection) und 4396 (Allen-Cahn)
+- **Gewaehlt:** Falls M2a sonst weniger als 5000 Iterationen erlaubt, einmalige
+  Reduktion auf 396 bzw. 2175 Loss-Punkte, identisch fuer alle Bedingungen je PDE.
+- **Begruendung:** Das Streichen von Allen-Cahn beseitigt die praeregistrierte
+  Doppeldissoziation und damit den Mechanismustest. Eine outcome-unabhaengige,
+  symmetrische Punktreduktion bewahrt ihn und ist durch AM26s Overfitting-Befund
+  inhaltlich plausibel. Erst wenn diese Stufe nicht reicht, wird Stage B gestrichen.
