@@ -14,6 +14,13 @@ def launcher_source(
     point_scheme: str = "full",
 ) -> str:
     mount = code_dataset.split("/", 1)[1]
+    bootstrap = ""
+    if hardware == "p100":
+        bootstrap = '''subprocess.run([
+    sys.executable, "-m", "pip", "install", "--disable-pip-version-check",
+    "--no-cache-dir", "--force-reinstall", "torch==2.5.1",
+    "--index-url", "https://download.pytorch.org/whl/cu121",
+], check=True)'''
     config = "configs/stage_b.json" if mode == "stage_b" else "configs/stage_a.json"
     if mode == "m2a":
         command = [
@@ -48,6 +55,7 @@ shutil.copytree(mounted, root, dirs_exist_ok=True)
 for archive in mounted.glob("*.zip"):
     with zipfile.ZipFile(archive) as handle:
         handle.extractall(root)
+{bootstrap}
 os.chdir(root)
 sys.path.insert(0, str(root))
 os.environ["PINN_RESULTS_DATASET"] = "{results_dataset}"
@@ -89,9 +97,14 @@ def main() -> None:
     }
     notebook_path = args.output_dir / f"{args.mode}.ipynb"
     notebook_path.write_text(json.dumps(notebook, indent=2) + "\n", encoding="utf-8")
+    title = (
+        f"PINN PDE Attention {args.mode} {args.hardware} {args.point_scheme}"
+        if args.mode == "m2a"
+        else f"PINN PDE Attention {args.mode}"
+    )
     metadata = {
         "id": args.kernel_id,
-        "title": f"PINN PDE Attention {args.mode}",
+        "title": title,
         "code_file": notebook_path.name,
         "language": "python",
         "kernel_type": "notebook",

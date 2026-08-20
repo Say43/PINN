@@ -58,4 +58,11 @@ class M2Tests(unittest.TestCase):
         )
         self.assertIn("/kaggle/input/pinn-code", source)
         self.assertIn("python', '-m', 'kaggle.runner", source)
+        self.assertIn("torch==2.5.1", source)
         self.assertNotIn("class PDEGraphNet", source)
+
+    def test_t4_launcher_does_not_replace_kaggle_torch(self) -> None:
+        source = launcher_source(
+            "m2a", "owner/pinn-code", "owner/pinn-results", None, "2xt4"
+        )
+        self.assertNotIn("download.pytorch.org", source)
