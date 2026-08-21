@@ -21,11 +21,11 @@ SEEDS = (0, 1, 2, 3, 4)
 
 def measure_unweighted_terms(seed: int) -> tuple[float, float]:
     config = ExperimentConfig(
-        pde=PDEConfig(allow_underresolved=True, 
+        pde=PDEConfig(
             name="convection",
-            domain_points=100,
-            boundary_points=50,
-            initial_points=50,
+            domain_points=1024,
+            boundary_points=100,
+            initial_points=100,
             evaluation_x=5,
             evaluation_t=5,
         ),
@@ -74,7 +74,7 @@ def select_lambda() -> dict:
         "precision": "fp32",
         "pde": "convection",
         "backbone": "mlp",
-        "points": {"domain": 100, "boundary": 50, "initial": 50},
+        "points": {"domain": 1024, "boundary": 100, "initial": 100},
         "target_ratio": TARGET_RATIO,
         "seeds": list(SEEDS),
         "terms": terms,
