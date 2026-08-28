@@ -27,8 +27,8 @@ class ResolutionTests(unittest.TestCase):
         self.assertFalse(report.adequate)
 
     def test_minimum_domain_points_for_beta_50(self):
-        self.assertEqual(minimum_domain_points(beta=50.0), 1024)
-        report = convection_resolution(1024, beta=50.0)
+        self.assertEqual(minimum_domain_points(beta=50.0), 4096)
+        report = convection_resolution(4096, beta=50.0)
         self.assertTrue(report.adequate)
 
     def test_minimum_scales_with_beta(self):
@@ -39,12 +39,18 @@ class ResolutionTests(unittest.TestCase):
     def test_guard_raises_and_names_the_requirement(self):
         with self.assertRaises(ValueError) as ctx:
             require_convection_resolution(196, beta=50.0)
-        self.assertIn("1024", str(ctx.exception))
+        self.assertIn("4096", str(ctx.exception))
 
     def test_pde_refuses_underresolved_config_by_default(self):
         config = PDEConfig(name="convection", domain_points=196, beta=50.0)
         with self.assertRaises(ValueError):
             ConvectionPDE(config)
+
+    def test_1024_points_still_rejected_after_empirical_correction(self):
+        """4.02 Abtastungen/Periode reichten bei beta=50 nachweislich nicht."""
+        report = convection_resolution(1024, beta=50.0)
+        self.assertGreater(report.samples_per_period, 4.0)
+        self.assertFalse(report.adequate)
 
     def test_pde_accepts_underresolved_only_with_explicit_opt_in(self):
         config = PDEConfig(

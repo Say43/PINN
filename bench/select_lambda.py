@@ -1,3 +1,13 @@
+"""Anfangs-Loss-Skalierung fuer lambda_r.
+
+UEBERHOLT: Die hier verwendete Regel (Penalty auf 10 % des Anfangs-Loss)
+waehlte lambda_r=1.0 und trieb Double Backprop nachweislich in die
+Trivialloesung — der Initial-Loss stagnierte bei 0.43, der Optimierer fror
+nach 300 Iterationen ein. Der funktionierende Bereich liegt bei 1e-4.
+Die Nachfolgeregel waehlt lambda_r ueber einen Sweep auf der MLP-Baseline.
+Siehe FINDINGS.md und PREREGISTRATION-V4.md.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -19,13 +29,15 @@ TARGET_RATIO = 0.1
 SEEDS = (0, 1, 2, 3, 4)
 
 
-def measure_unweighted_terms(seed: int) -> tuple[float, float]:
+def measure_unweighted_terms(seed: int, *, beta: float = 50.0,
+                            domain_points: int = 4096) -> tuple[float, float]:
     config = ExperimentConfig(
         pde=PDEConfig(
             name="convection",
-            domain_points=1024,
+            domain_points=domain_points,
             boundary_points=100,
             initial_points=100,
+            beta=beta,
             evaluation_x=5,
             evaluation_t=5,
         ),
@@ -74,7 +86,7 @@ def select_lambda() -> dict:
         "precision": "fp32",
         "pde": "convection",
         "backbone": "mlp",
-        "points": {"domain": 1024, "boundary": 100, "initial": 100},
+        "points": {"domain": 4096, "boundary": 100, "initial": 100},
         "target_ratio": TARGET_RATIO,
         "seeds": list(SEEDS),
         "terms": terms,

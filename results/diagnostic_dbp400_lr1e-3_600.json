@@ -1,0 +1,92 @@
+{
+  "note": "Feasibility diagnostic, NOT_STUDY_DATA",
+  "diagnostic": "cold_start_ladder",
+  "settings": {
+    "domain_points": 400,
+    "boundary_points": 200,
+    "initial_points": 200,
+    "hidden_dim": 128,
+    "num_layers": 4,
+    "precision": "fp32",
+    "regularization": "double_backprop",
+    "lambda_r": 0.001,
+    "max_iters": 600,
+    "history_size": 100,
+    "learning_rate": 1.0,
+    "log_every": 100,
+    "seed": 0,
+    "device": "cpu",
+    "allow_underresolved": true
+  },
+  "stages": [
+    {
+      "beta": 50.0,
+      "best_relative_l2": 0.9934445023536682,
+      "final_relative_l2": 1.073899269104004,
+      "target_reached": false,
+      "wall_seconds": 30.418904799997108,
+      "function_evaluations": 1261,
+      "train_loss": {
+        "loss_total": 0.021818937733769417,
+        "loss_base": 0.011411841958761215,
+        "loss_domain": 0.0016724360175430775,
+        "loss_boundary": 0.0045076035894453526,
+        "loss_initial": 0.005231801886111498,
+        "loss_regularizer": 20.814189910888672
+      },
+      "held_out_loss": {
+        "loss_total": 19.52236557006836,
+        "loss_base": 6.46274995803833,
+        "loss_domain": 6.453101634979248,
+        "loss_boundary": 0.004496643785387278,
+        "loss_initial": 0.005151692777872086,
+        "loss_regularizer": 26119.23046875
+      },
+      "domain_generalization_ratio": 3858.504341744143,
+      "history": [
+        {
+          "iteration": 1,
+          "relative_l2": 1.0000293254852295,
+          "wall_seconds": 0.047521900007268414,
+          "function_evaluations": 2
+        },
+        {
+          "iteration": 100,
+          "relative_l2": 1.0468693971633911,
+          "wall_seconds": 4.519630299997516,
+          "function_evaluations": 218
+        },
+        {
+          "iteration": 200,
+          "relative_l2": 0.9934445023536682,
+          "wall_seconds": 9.730518900003517,
+          "function_evaluations": 422
+        },
+        {
+          "iteration": 300,
+          "relative_l2": 1.0243395566940308,
+          "wall_seconds": 14.87717709998833,
+          "function_evaluations": 631
+        },
+        {
+          "iteration": 400,
+          "relative_l2": 1.0180943012237549,
+          "wall_seconds": 19.919717999990098,
+          "function_evaluations": 836
+        },
+        {
+          "iteration": 500,
+          "relative_l2": 1.0135287046432495,
+          "wall_seconds": 24.98098689998733,
+          "function_evaluations": 1045
+        },
+        {
+          "iteration": 600,
+          "relative_l2": 1.073899269104004,
+          "wall_seconds": 30.380074899992906,
+          "function_evaluations": 1261
+        }
+      ]
+    }
+  ]
+}

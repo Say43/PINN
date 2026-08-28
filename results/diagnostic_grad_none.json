@@ -1,0 +1,129 @@
+{
+  "note": "Feasibility diagnostic, NOT_STUDY_DATA",
+  "diagnostic": "initial_gradient_snapshot",
+  "snapshots": [
+    {
+      "beta": 1.0,
+      "settings": {
+        "domain_points": 400,
+        "boundary_points": 200,
+        "initial_points": 200,
+        "hidden_dim": 128,
+        "num_layers": 4,
+        "precision": "fp32",
+        "regularization": "none",
+        "lambda_r": 0.0001,
+        "max_iters": 1000,
+        "history_size": 100,
+        "learning_rate": 1.0,
+        "log_every": 100,
+        "seed": 0,
+        "device": "cpu",
+        "allow_underresolved": true
+      },
+      "losses": {
+        "domain": 0.00022178023937158287,
+        "boundary": 0.005203343462198973,
+        "initial": 0.4807145595550537,
+        "base": 0.4861396849155426,
+        "weighted_regularizer": 0.0,
+        "total": 0.4861396849155426
+      },
+      "gradient_norms": {
+        "domain": 0.13885138928890228,
+        "boundary": 1.0074466466903687,
+        "initial": 2.1535282135009766,
+        "base": 1.133150577545166,
+        "weighted_regularizer": 0.0,
+        "total": 1.133150577545166
+      },
+      "gradient_cosines": {
+        "domain_initial": -0.1639574021100998,
+        "domain_boundary": 0.16161192953586578,
+        "base_regularizer": null
+      }
+    },
+    {
+      "beta": 10.0,
+      "settings": {
+        "domain_points": 400,
+        "boundary_points": 200,
+        "initial_points": 200,
+        "hidden_dim": 128,
+        "num_layers": 4,
+        "precision": "fp32",
+        "regularization": "none",
+        "lambda_r": 0.0001,
+        "max_iters": 1000,
+        "history_size": 100,
+        "learning_rate": 1.0,
+        "log_every": 100,
+        "seed": 0,
+        "device": "cpu",
+        "allow_underresolved": true
+      },
+      "losses": {
+        "domain": 0.013105039484798908,
+        "boundary": 0.005203343462198973,
+        "initial": 0.4807145595550537,
+        "base": 0.4990229308605194,
+        "weighted_regularizer": 0.0,
+        "total": 0.4990229308605194
+      },
+      "gradient_norms": {
+        "domain": 2.8882176876068115,
+        "boundary": 1.0074466466903687,
+        "initial": 2.1535282135009766,
+        "base": 1.989479899406433,
+        "weighted_regularizer": 0.0,
+        "total": 1.989479899406433
+      },
+      "gradient_cosines": {
+        "domain_initial": -0.8605010509490967,
+        "domain_boundary": 0.8597074747085571,
+        "base_regularizer": null
+      }
+    },
+    {
+      "beta": 50.0,
+      "settings": {
+        "domain_points": 400,
+        "boundary_points": 200,
+        "initial_points": 200,
+        "hidden_dim": 128,
+        "num_layers": 4,
+        "precision": "fp32",
+        "regularization": "none",
+        "lambda_r": 0.0001,
+        "max_iters": 1000,
+        "history_size": 100,
+        "learning_rate": 1.0,
+        "log_every": 100,
+        "seed": 0,
+        "device": "cpu",
+        "allow_underresolved": true
+      },
+      "losses": {
+        "domain": 0.3287694454193115,
+        "boundary": 0.005203343462198973,
+        "initial": 0.4807145595550537,
+        "base": 0.8146873712539673,
+        "weighted_regularizer": 0.0,
+        "total": 0.8146873712539673
+      },
+      "gradient_norms": {
+        "domain": 63.869102478027344,
+        "boundary": 1.0074466466903687,
+        "initial": 2.1535282135009766,
+        "base": 62.732295989990234,
+        "weighted_regularizer": 0.0,
+        "total": 62.732295989990234
+      },
+      "gradient_cosines": {
+        "domain_initial": -0.9925962686538696,
+        "domain_boundary": 0.9931992888450623,
+        "base_regularizer": null
+      }
+    }
+  ]
+}

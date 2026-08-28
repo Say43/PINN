@@ -3,6 +3,54 @@
 **Diese Studie ist ein Pilot ohne konfirmatorischen Anspruch.** Berichtet werden
 Effektstärken mit Unsicherheit und Kostenmessungen; Null-Resultate stehen zuerst.
 
+## Aktueller Nachtrag — Machbarkeit und Projektoptionen (2026-08-21)
+
+**Die Studienmatrix bleibt gestoppt.** Die nach M2b ausgefuehrten, ausdruecklich als
+`NOT_STUDY_DATA` markierten Diagnosen zeigen, dass Aliasing ein echter Teil des
+M2b-Fehlers war, aber nicht die alleinige Ursache. Mit aufgeloesten 1024- und
+4096-Punkte-Gittern erreichte keine getestete Baseline den vorab gesetzten relativen
+L2 von 0.10; der beste Wert war 0.664 (MLP/FP64/none, 4096 Punkte, 4000
+Iterationen). Daraus darf weder ein Architektur- noch ein Praezisionsbefund
+abgeleitet werden.
+
+Die neue Diagnose-Suite `analysis/diagnose_feasibility.py` trennt Kapazitaet,
+Gradientenkonflikt, Cold Start, Curriculum und Generalisierung des Residuals:
+
+- **Kapazitaet ist nicht der Engpass.** Dasselbe 4x128-tanh-MLP erreichte beim
+  direkten ueberwachten Fit der analytischen beta=50-Loesung einen besten
+  relativen L2 von 0.0113. Das liegt klar unter der Studien-Schwelle 0.10.
+- **Der Physics-Loss ist bei beta=50 stark unausgeglichen.** Bei identischer
+  Initialisierung betraegt die Parametergradientnorm des Domainterms 63.87,
+  die des Initialterms 2.15. Ihr Kosinus ist -0.993: Die beiden Terme verlangen
+  nahezu entgegengesetzte Updates.
+- **Cold Start reproduziert die Schwierigkeit und quantifiziert Overfitting.**
+  Nach je 600 L-BFGS-Iterationen werden beta=1 (L2 0.00875) und beta=10
+  (0.00265) geloest. beta=50 bleibt bei bestenfalls 0.971; der held-out
+  Domainloss ist 31 844-mal so gross wie der Trainings-Domainloss.
+- **Curriculum hilft, reicht im getesteten Kurzbudget aber nicht.** Bei gleichem
+  Gesamtbudget verbessert die grobe beta-Leiter den beta=50-Wert auf 0.634 und
+  senkt den Domain-Generaliserungsfaktor auf 53.8. Eine feinere Leiter in
+  5er-Schritten endet bei 0.679; der Uebergang scheitert zwischen beta=25 und 30.
+- **Double Backprop zeigt einen Lambda-Trade-off, aber keinen Erfolg.** Auf dem
+  publizierten 400+200+200-Schema und bei 600 Iterationen overfittet lambda_r=1e-4
+  stark (Faktor 2211, bester L2 0.892). Mit groesserem lambda_r sinkt der
+  Train/Test-Gap, waehrend die Optimierung zur falschen Loesung erstarrt;
+  lambda_r=1 hat Faktor 1.13, aber besten L2 1.000.
+
+Die Referenzreproduktion ist nicht exakt: Andersen & Matsubara verwenden
+JAX/Flax/Optax statt PyTorch, eine andere L-BFGS-Steuerung und nennen den Wert von
+`lambda_r` nicht. Sie verwenden fuer Convection dennoch ausdruecklich ein
+20x20-Gitter mit 400 Domainpunkten plus je 200 Boundary-/Initialpunkte. Deshalb
+ist die derzeitige harte Vier-Abtastungen-pro-Periode-Regel eine konservative
+Projektregel, aber **kein aus der Referenz belegtes allgemeines Loesbarkeitsgesetz**.
+Sie darf nicht mehr als alleinige Diagnose fuer alle regularisierten Setups gelten.
+
+Die geprueften Fortsetzungsoptionen und die Empfehlung stehen in
+`docs/feasibility-options.md`. Der risikoaermste wissenschaftliche Weg ist eine
+neue, explizite Re-Praeregistrierung nach einer echten AM26-Baseline-Reproduktion.
+Ohne diesen Schritt sollte das Projekt als sauberer Feasibility-/Methodenbefund
+abgeschlossen werden, nicht als Architekturvergleich.
+
 **Stand 2026-08-20: Es gibt keine verwertbare Aussage über Architekturen.** Der
 M2b-Slice ist vollständig erhoben, aber durch einen Setup-Fehler entwertet. Die
 Ursache ist identifiziert und unten dokumentiert.

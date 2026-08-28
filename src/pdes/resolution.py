@@ -18,9 +18,11 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-# Nyquist verlangt > 2. Vier ist der bewusst konservative Sicherheitsabstand:
-# AM26 arbeitet mit 2.51 und braucht dafuer 10^6 L-BFGS-Iterationen.
-MIN_SAMPLES_PER_PERIOD = 4.0
+# Nyquist verlangt > 2. Vier war nachweislich zu wenig: bei beta=50 und 1024
+# Punkten (4.02 Abtastungen/Periode) fiel der Loss auf 1e-5, waehrend der Fehler
+# auf 1.41 stieg — weiterhin Aliasing. Bei 4096 Punkten (8.04) sank der Fehler
+# erstmals monoton mit dem Loss. Acht ist damit empirisch validiert, nicht gesetzt.
+MIN_SAMPLES_PER_PERIOD = 8.0
 
 
 @dataclass(frozen=True)

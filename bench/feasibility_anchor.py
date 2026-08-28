@@ -41,6 +41,7 @@ def build_config(
     seed: int,
     device: str,
     gpu_seconds: float,
+    lambda_r: float,
 ) -> ExperimentConfig:
     return ExperimentConfig(
         pde=PDEConfig(
@@ -70,7 +71,7 @@ def build_config(
             line_search_fn="strong_wolfe",
             tolerance_grad=0.0,
             tolerance_change=0.0,
-            lambda_r=1.0,
+            lambda_r=lambda_r,
             log_every=100,
             device=device,
             max_local_gpu_seconds=gpu_seconds,
@@ -91,6 +92,7 @@ def main() -> None:
     parser.add_argument("--regularization", default="double_backprop")
     parser.add_argument("--max-iters", type=int, default=8000)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--lambda-r", type=float, default=1.0)
     parser.add_argument("--device", default="cuda:0")
     parser.add_argument("--gpu-seconds", type=float, default=14400.0)
     parser.add_argument("--out", type=Path, default=Path("results/feasibility_anchor.json"))
@@ -99,7 +101,8 @@ def main() -> None:
     report = convection_resolution(args.domain_points, beta=50.0)
     print(f"Aufloesung: {report.describe()}")
     print(f"Konfiguration: {args.backbone}/{args.precision}/{args.regularization}, "
-          f"{args.domain_points} Domaenenpunkte, {args.max_iters} Iterationen, {args.device}")
+          f"{args.domain_points} Domaenenpunkte, {args.max_iters} Iterationen, "
+          f"lambda_r={args.lambda_r:g}, {args.device}")
     print("Ziel: relativer L2 < 0.10\n", flush=True)
 
     config = build_config(
@@ -111,6 +114,7 @@ def main() -> None:
         seed=args.seed,
         device=args.device,
         gpu_seconds=args.gpu_seconds,
+        lambda_r=args.lambda_r,
     )
 
     started = time.perf_counter()
@@ -150,6 +154,7 @@ def main() -> None:
             "regularization": args.regularization,
             "max_iters": args.max_iters,
             "seed": args.seed,
+            "lambda_r": args.lambda_r,
             "device": args.device,
         },
         "status": result.status,

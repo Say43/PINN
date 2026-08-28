@@ -1,32 +1,40 @@
-# Naechster Schritt (Stand 2026-08-20, 22:45 — alles gestoppt)
+# Naechster Schritt (Stand 2026-08-21 — Studienmatrix gestoppt)
 
-Nichts laeuft. Kein Kaggle-Kernel aktiv, keine lokalen Prozesse, working tree sauber.
-Verbraucht: 1.48 von 27 verfuegbaren GPU-Stunden.
+Nichts laeuft. Kein Kaggle-Kernel und kein lokaler Diagnoseprozess aktiv.
+Verbraucht bleiben rund 1.48 von 27 verfuegbaren GPU-Stunden; alle neuen
+Machbarkeitsdiagnosen liefen lokal auf CPU und schreiben nicht in `results.sqlite`.
 
-**Wo es weitergeht:** Der Machbarkeitsanker wurde vor dem Ende abgebrochen und muss
-neu gestartet werden. Er ist die Vorbedingung fuer jeden weiteren Kaggle-Lauf.
+**Die alte Anweisung, den 1024-Punkte-Anker neu zu starten, ist erledigt und darf
+nicht erneut ausgefuehrt werden.** Auch die nachfolgenden 4096-Punkte- und
+Lambda-Sweeps haben das Ziel relativer L2 < 0.10 nicht erreicht. Der beste
+aufgeloeste Anker liegt bei 0.664.
 
-    python -m bench.feasibility_anchor --domain-points 1024 --max-iters 20000         --precision fp32 --regularization double_backprop --device cpu         --out results/anchor_dbp.json
+Neu vorhanden:
 
-    python -m bench.feasibility_anchor --domain-points 1024 --max-iters 20000         --precision fp32 --regularization none --device cpu         --out results/anchor_none.json
+- `analysis/diagnose_feasibility.py`: Capacity-, Gradienten-, Cold-Start-,
+  Curriculum- und held-out-Residualdiagnosen; alle Artefakte tragen
+  `NOT_STUDY_DATA`.
+- `results/diagnostic_capacity_beta50_10k.json`: direkter Fit belegt
+  Modellkapazitaet (bester L2 0.0113).
+- `results/diagnostic_grad_*.json`: bei beta=50 fast exakt gegengerichtete
+  Domain-/Initialgradienten und rund 30-faches Normverhaeltnis.
+- `results/diagnostic_ladder_*.json`: Cold Start scheitert bei beta=50;
+  Curriculum verbessert, erreicht aber nicht 0.10.
+- `results/diagnostic_dbp400_*.json`: vollstaendiges vorab definiertes
+  Lambda-Grid bei einheitlichem 600-Iterationen-Kurzbudget; kein Wert erfolgreich.
+- `docs/feasibility-options.md`: bewertete Fortsetzungswege und Empfehlung.
 
-Laufzeit lokal auf CPU: etwa 40 bzw. 20 Minuten, kein GPU-Quota. Die Anker sind
-KEINE Studiendaten und schreiben nicht in results.sqlite.
+**Empfohlene Entscheidung:** Keine GPU-Matrix starten. Entweder das Projekt als
+Feasibility-/Methodenbefund abschliessen oder vor einer neuen Studie eine echte
+AM26-Reproduktion in JAX/Optax herstellen, den nicht publizierten `lambda_r`-Wert
+klaeren und danach eine neue Praeregistrierung einfrieren. Curriculum ist eine
+belegte explorative Option, waere aber eine neue Forschungsfrage und darf nicht
+stillschweigend in die bestehende Matrix eingebaut werden.
 
-**Woran die Entscheidung haengt:** Erreicht der Double-Backprop-Anker den relativen
-L2 von 0.10 bei hoechstens 4000 Iterationen, passt die vollstaendige Option B
-(3 Backbones x 2 Praezisionen x 2 Regularisierungen x 5 Seeds, 60 Laeufe) mit
-22.5 h in die 27 h. Braucht er mehr, siehe Tabelle in `bench/replan.py` bzw.
-`results/replan_27h.json`.
-
-**Danach:** lambda_r bei korrekter Aufloesung neu bestimmen (lokal, der Wert 1.0
-stammt von einem 10x10-Gitter), dann kurze Neukalibrierung auf Kaggle mit 1224
-Punkten (~0.2 h), dann Matrix zur Freigabe vorlegen.
-
-**Was heute passiert ist:** M2b vollstaendig erhoben und als Evidenz verworfen —
-das Kollokationsgitter lag unter dem Nyquist-Limit. Details in FINDINGS.md und
-DEVIATIONS.md D-7. Die Aufloesungspruefung ist jetzt eine harte Vorbedingung im
-Code; sie lehnt auch die praeregistrierten 400 Punkte ab.
+Der Working Tree ist absichtlich nicht sauber: Neben dem bereits vorhandenen
+`bench/feasibility_anchor.py`-Diff sind neue Diagnose-Skripte und JSON-Artefakte
+noch untracked. Vor Commit zuerst den finalen Scope pruefen; keine alten
+Ergebnisartefakte loeschen oder ueberschreiben.
 
 ---
 
