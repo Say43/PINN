@@ -61,14 +61,24 @@ Mechanismus-Erklärung und für einen unspezifischen Kapazitätseffekt.
 
 β wird **nicht gewählt, sondern gemessen**. Phase 1 fährt ausschließlich die
 MLP-Baseline (fp32, `none`, Seed 0) bei je der größten Iterationszahl, die für
-dieses β ins Budget passt:
+dieses β eine Hauptmatrix von höchstens 6.0 h ergibt:
 
-| β | Domänenpunkte | Iterationen | Matrixkosten |
-|---|---|---|---|
-| 15 | 400 | 6000 | 20.6 h |
-| 20 | 676 | 4000 | 20.1 h |
-| 25 | 1024 | 3000 | 21.0 h |
-| 30 | 1521 | 2000 | 19.7 h |
+| β | Perioden in t | Domänenpunkte | Gitter | Iterationen | Matrixkosten |
+|---|---|---|---|---|---|
+| 10 | 1.59 | 169 | 13×13 | 7500 | 5.96 h |
+| 12 | 1.91 | 256 | 16×16 | 6000 | 5.83 h |
+| 15 | 2.39 | 400 | 20×20 | 4500 | 5.69 h |
+| 20 | 3.18 | 676 | 26×26 | 3000 | 5.48 h |
+| 25 | 3.98 | 1024 | 32×32 | 2000 | 5.07 h |
+| 30 | 4.77 | 1521 | 39×39 | 1500 | 5.32 h |
+
+Alle Punktzahlen erfüllen die Auflösungsforderung von acht Abtastungen pro Periode.
+Die Iterationszahl ist an das Budget gekoppelt, nicht frei gewählt; je größer β,
+desto teurer ein Schritt und desto weniger Schritte sind finanzierbar.
+
+Der Kandidatenbereich reicht bewusst bis β = 10 hinunter, weil die kleinen β billig
+sind und als Rückfallebene dienen, falls die großen bei ihrer Iterationszahl
+gesättigt scheitern.
 
 **Auswahlregel, vorab und abschließend:** Gewählt wird das **größte** β, dessen
 MLP-Baseline einen relativen L2 im Band **[0.15, 0.75]** erreicht.
@@ -91,10 +101,15 @@ Architekturvergleich nicht begünstigen.
 Der Wert ist in AM26 nicht angegeben und muss selbst bestimmt werden. Die alte
 Heuristik ist widerlegt (§1.6).
 
-**Neue Regel:** Bei gewähltem β wird die **MLP-Baseline** mit
-λ_r ∈ {1e-5, 1e-4, 1e-3, 1e-2} gefahren (fp32, Seed 0). Gewählt wird der Wert mit dem
-niedrigsten relativen L2. Dieser Wert gilt danach **unverändert für alle Backbones,
-Präzisionen und Seeds**.
+**Neue Regel:** Bei gewähltem β und dessen Iterationszahl wird die **MLP-Baseline**
+mit λ_r ∈ {1e-5, 1e-4, 1e-3, 1e-2} gefahren (fp32, `double_backprop`, Seed 0).
+Gewählt wird der Wert mit dem niedrigsten relativen L2. Dieser Wert gilt danach
+**unverändert für alle Backbones, Präzisionen und Seeds**.
+
+Sollten alle vier Werte schlechter abschneiden als die unregularisierte Baseline aus
+Phase 1a, wird das so berichtet: Double Backprop hilft in diesem Setup nicht. Der
+Arm bleibt dennoch in der Matrix, weil H0 ihn als Kontrollstufe braucht — er wird
+dann mit dem besten der vier Werte gefahren.
 
 Wieder gilt: nur die Baseline wird verwendet, kein Graph-Backbone. Es gibt kein
 architekturspezifisches Tuning.
@@ -142,16 +157,37 @@ Divergenz und hohe Fehler sind Messergebnisse, kein Ausschlussgrund.
 
 | Posten | Stunden |
 |---|---|
-| Phase 1: β-Auswahl (4 Baseline-Läufe) | 0.6 |
-| Phase 1: λ_r-Auswahl (4 Baseline-Läufe) | 0.9 |
-| Phase 2: Hauptmatrix, 60 Läufe | ~20.1 |
-| Reserve (unantastbar) | 2.0 |
 | Bereits verbraucht (V3) | 1.5 |
-| **Gesamt** | **~25.1 von 27** |
+| Phase 1a: β-Auswahl (6 Baseline-Läufe) | 0.2 |
+| Phase 1b: λ_r-Auswahl (4 Baseline-Läufe) | 0.3 |
+| Phase 2: Hauptmatrix, 60 Läufe | ~5.1 bis 6.0 |
+| Reserve (unantastbar) | 1.0 |
+| **Gesamt** | **~8.1 bis 9.0 von 27** |
 
-Ausführung auf Kaggle, eine GPU, ein Worker, Persistenz nach jedem Einzellauf.
-Das 12-Stunden-Session-Limit erzwingt mindestens zwei Sessions für Phase 2; die
-Resume-Logik ist dafür gebaut und hat sich in V3 beim Abbruch bewährt.
+Zwei Maßnahmen bringen die Matrix von 20 h auf unter 6 h:
+
+**Zwei Worker auf 2× T4.** Kaggle rechnet Session-Wallclock ab, nicht Device-Stunden.
+Zwei Prozesse, einer je GPU (`CUDA_VISIBLE_DEVICES=0` / `=1`), halbieren den
+Quota-Verbrauch bei gleicher Arbeit. **Dies kehrt `DEVIATIONS.md` D-1 um**, wo aus
+Sicherheitsgründen ein Worker festgelegt wurde. Begründung der Umkehr: Die
+Persistenzgarantie hat sich beim Abbruch in V3 bewährt — von sechs Läufen ging genau
+der eine gerade laufende verloren, fünf waren transaktional gesichert. Mit zwei
+Workern wächst das Verlustfenster von einem auf zwei Läufe. Bei Laufzeiten von unter
+zehn Minuten pro Lauf und einem Faktor zwei beim Budget ist dieser Tausch vertretbar.
+Die Umkehr wird als eigener Eintrag protokolliert.
+
+**`log_every` von 100 auf 500.** Die Zwischenauswertung auf dem 101×101-Gitter kostet
+in V3 gemessen rund 20 % der Laufzeit. Fünfmal seltener auszuwerten spart davon vier
+Fünftel. Die Endauswertung bleibt unverändert auf 101×101, die Primärmetrik ist davon
+nicht berührt — nur die Trainingskurven werden gröber aufgelöst.
+
+Ein zusätzlich geprüfter Hebel wurde **verworfen**: die Zwischenauswertung auf 51×51
+zu verkleinern hätte nur 0.05 bis 0.25 h gebracht und einen Eingriff in den Trainer
+erfordert. Das Verhältnis von Ersparnis zu Risiko rechtfertigt das nicht.
+
+Ausführung auf Kaggle, 2× T4, Persistenz nach jedem Einzellauf. Die Hauptmatrix passt
+mit unter 6 h in eine einzige Session, das 12-Stunden-Limit wird nicht mehr zum
+Engpass. Die Resume-Logik bleibt trotzdem aktiv.
 
 **Anmerkung zur Ausführungsplattform:** Für Modelle dieser Größe ist die lokale CPU
 gemessen schneller als die Kaggle-T4 (1024 Punkte, 6000 Iterationen: 635 s lokal

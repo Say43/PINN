@@ -169,3 +169,26 @@ Abweichungen von der Literatur**, die vor dem Einfrieren bewusst getroffen wurde
   empfohlen, ohne die Abtastbedingung gegen beta zu pruefen.
 - **Konsequenz:** Auflaesungspruefung als harte Vorbedingung vor jedem Lauf,
   Mindestens vier Abtastungen pro Periode. Details in FINDINGS.md Abschnitt 6.
+
+## D-8 — Umkehr von D-1: zwei Worker auf 2x T4
+- **Datum:** 2026-08-21
+- **Gilt fuer:** PREREGISTRATION-V4 (neue Studie), nicht rueckwirkend fuer V3
+- **Vorher (D-1):** genau ein Studienworker, damit ein Session-Kill hoechstens einen
+  Lauf vernichtet.
+- **Nachher:** zwei Worker, einer je T4.
+- **Begruendung:** Kaggle rechnet Session-Wallclock ab, nicht Device-Stunden. Zwei
+  Worker halbieren den Quota-Verbrauch. Die Persistenzgarantie hat sich in V3
+  bewaehrt: beim Abbruch des M2b-Kernels ging von sechs Laeufen genau der eine
+  gerade laufende verloren. Das Verlustfenster waechst von einem auf zwei Laeufe,
+  bei Laufzeiten unter zehn Minuten je Lauf.
+- **Ergebnisse gesichtet:** ja, aber die Aenderung betrifft ausschliesslich
+  Ausfuehrung und Kosten, keine wissenschaftliche Groesse.
+
+## D-9 — log_every von 100 auf 500
+- **Datum:** 2026-08-21
+- **Gilt fuer:** PREREGISTRATION-V4
+- **Begruendung:** Die Zwischenauswertung auf dem 101x101-Gitter kostete in V3
+  gemessen rund 20 Prozent der Laufzeit. Die Endauswertung und damit die
+  Primaermetrik bleiben unveraendert; nur die Trainingskurven werden groeber.
+- **Verworfen:** Zwischenauswertung auf 51x51 zu verkleinern. Ersparnis nur 0.05 bis
+  0.25 h, dafuer ein Eingriff in den Trainer. Nicht gerechtfertigt.
