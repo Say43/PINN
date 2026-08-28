@@ -1,0 +1,50 @@
+{
+  "note": "Machbarkeitsanker, KEINE Studiendaten",
+  "resolution": "n/a",
+  "samples_per_period": null,
+  "config": {
+    "pde": "allen_cahn",
+    "beta": 50.0,
+    "domain_points": 4096,
+    "backbone": "mlp",
+    "precision": "fp32",
+    "regularization": "none",
+    "max_iters": 100,
+    "seed": 0,
+    "lambda_r": 1.0,
+    "device": "cpu"
+  },
+  "status": "completed",
+  "wall_seconds": 40.91589290000047,
+  "best_relative_l2": 0.9963550567626953,
+  "final_relative_l2": 0.9986105561256409,
+  "target": 0.1,
+  "target_reached": false,
+  "iterations_to_target": null,
+  "history": [
+    {
+      "iteration": 1,
+      "function_evaluations": 2,
+      "wall_seconds": 0.4048207000005277,
+      "relative_l2": 0.9963550567626953,
+      "loss_total": 0.15087439119815826,
+      "loss_base": 0.15087439119815826,
+      "loss_domain": 0.0048583680763840675,
+      "loss_boundary": 0.0007108868448995054,
+      "loss_initial": 0.14530514180660248,
+      "loss_regularizer": 0.0
+    },
+    {
+      "iteration": 100,
+      "function_evaluations": 207,
+      "wall_seconds": 37.20141320000039,
+      "relative_l2": 0.9986105561256409,
+      "loss_total": 0.14177997410297394,
+      "loss_base": 0.14177997410297394,
+      "loss_domain": 0.008188456296920776,
+      "loss_boundary": 0.00032224555616267025,
+      "loss_initial": 0.133269265294075,
+      "loss_regularizer": 0.0
+    }
+  ]
+}

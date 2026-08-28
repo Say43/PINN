@@ -33,6 +33,8 @@ TARGET = 0.10
 
 def build_config(
     *,
+    pde_name: str,
+    reference_path: str | None,
     domain_points: int,
     backbone: str,
     precision: str,
@@ -42,16 +44,18 @@ def build_config(
     device: str,
     gpu_seconds: float,
     lambda_r: float,
+    beta: float,
 ) -> ExperimentConfig:
     return ExperimentConfig(
         pde=PDEConfig(
-            name="convection",
+            name=pde_name,
             domain_points=domain_points,
             boundary_points=100,
             initial_points=100,
             evaluation_x=101,
             evaluation_t=101,
-            beta=50.0,
+            beta=beta,
+            reference_path=reference_path,
         ),
         model=ModelConfig(
             backbone=backbone,
@@ -86,6 +90,9 @@ def build_config(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--pde", default="convection", choices=("convection","allen_cahn"))
+    parser.add_argument("--beta", type=float, default=50.0)
+    parser.add_argument("--reference", default=None)
     parser.add_argument("--domain-points", type=int, default=1024)
     parser.add_argument("--backbone", default="mlp")
     parser.add_argument("--precision", default="fp32")
@@ -98,14 +105,21 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=Path("results/feasibility_anchor.json"))
     args = parser.parse_args()
 
-    report = convection_resolution(args.domain_points, beta=50.0)
-    print(f"Aufloesung: {report.describe()}")
+    if args.pde == "convection":
+        report = convection_resolution(args.domain_points, beta=args.beta)
+        print(f"Aufloesung: {report.describe()}")
+    else:
+        report = None
+        print("Aufloesung: fuer Allen-Cahn noch keine Regel definiert")
     print(f"Konfiguration: {args.backbone}/{args.precision}/{args.regularization}, "
           f"{args.domain_points} Domaenenpunkte, {args.max_iters} Iterationen, "
           f"lambda_r={args.lambda_r:g}, {args.device}")
     print("Ziel: relativer L2 < 0.10\n", flush=True)
 
     config = build_config(
+        pde_name=args.pde,
+        reference_path=args.reference,
+        beta=args.beta,
         domain_points=args.domain_points,
         backbone=args.backbone,
         precision=args.precision,
@@ -145,9 +159,11 @@ def main() -> None:
 
     payload = {
         "note": "Machbarkeitsanker, KEINE Studiendaten",
-        "resolution": report.describe(),
-        "samples_per_period": report.samples_per_period,
+        "resolution": report.describe() if report else "n/a",
+        "samples_per_period": report.samples_per_period if report else None,
         "config": {
+            "pde": args.pde,
+            "beta": args.beta,
             "domain_points": args.domain_points,
             "backbone": args.backbone,
             "precision": args.precision,
