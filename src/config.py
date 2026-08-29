@@ -9,7 +9,7 @@ from typing import Any, Literal
 BackboneName = Literal["mlp", "grand", "gread"]
 PrecisionName = Literal["fp32", "fp64"]
 RegularizationName = Literal["none", "double_backprop"]
-PDEName = Literal["convection", "allen_cahn"]
+PDEName = Literal["convection", "allen_cahn", "reaction"]
 
 
 @dataclass(frozen=True)

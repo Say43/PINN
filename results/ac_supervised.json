@@ -1,0 +1,38 @@
+{
+  "note": "ueberwachter Gegentest, KEINE Studiendaten",
+  "pde": "allen_cahn",
+  "beta": 50.0,
+  "domain_points": 4096,
+  "max_iters": 400,
+  "seed": 0,
+  "best_relative_l2": 0.9199186375839838,
+  "wall_seconds": 58.731520100000125,
+  "verdict": "Auch ueberwacht kein Erfolg -> Verdacht auf Fehler in Referenz oder Anbindung",
+  "history": [
+    {
+      "iteration": 1,
+      "relative_l2": 0.9736450048080826,
+      "mse": 0.4813392250364421
+    },
+    {
+      "iteration": 100,
+      "relative_l2": 0.9199186375839838,
+      "mse": 0.42968363142404337
+    },
+    {
+      "iteration": 200,
+      "relative_l2": 0.9199186375839838,
+      "mse": 0.42968363142404337
+    },
+    {
+      "iteration": 300,
+      "relative_l2": 0.9199186375839838,
+      "mse": 0.42968363142404337
+    },
+    {
+      "iteration": 400,
+      "relative_l2": 0.9199186375839838,
+      "mse": 0.42968363142404337
+    }
+  ]
+}

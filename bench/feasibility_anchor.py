@@ -45,6 +45,7 @@ def build_config(
     gpu_seconds: float,
     lambda_r: float,
     beta: float,
+    rho: float,
 ) -> ExperimentConfig:
     return ExperimentConfig(
         pde=PDEConfig(
@@ -55,6 +56,7 @@ def build_config(
             evaluation_x=101,
             evaluation_t=101,
             beta=beta,
+            reaction=rho,
             reference_path=reference_path,
         ),
         model=ModelConfig(
@@ -90,8 +92,9 @@ def build_config(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--pde", default="convection", choices=("convection","allen_cahn"))
+    parser.add_argument("--pde", default="convection", choices=("convection","allen_cahn","reaction"))
     parser.add_argument("--beta", type=float, default=50.0)
+    parser.add_argument("--rho", type=float, default=5.0)
     parser.add_argument("--reference", default=None)
     parser.add_argument("--domain-points", type=int, default=1024)
     parser.add_argument("--backbone", default="mlp")
@@ -105,7 +108,10 @@ def main() -> None:
     parser.add_argument("--out", type=Path, default=Path("results/feasibility_anchor.json"))
     args = parser.parse_args()
 
-    if args.pde == "convection":
+    if args.pde == "reaction":
+        report = None
+        print(f"Reaction, rho={args.rho:g}: glatte Loesung, keine Nyquist-Bedingung")
+    elif args.pde == "convection":
         report = convection_resolution(args.domain_points, beta=args.beta)
         print(f"Aufloesung: {report.describe()}")
     else:
@@ -120,6 +126,7 @@ def main() -> None:
         pde_name=args.pde,
         reference_path=args.reference,
         beta=args.beta,
+        rho=args.rho,
         domain_points=args.domain_points,
         backbone=args.backbone,
         precision=args.precision,

@@ -1,0 +1,38 @@
+{
+  "note": "ueberwachter Gegentest, KEINE Studiendaten",
+  "pde": "allen_cahn",
+  "beta": 50.0,
+  "domain_points": 4096,
+  "max_iters": 400,
+  "seed": 0,
+  "best_relative_l2": 0.014536183167644021,
+  "wall_seconds": 55493.4218611,
+  "verdict": "Netz kann die Loesung darstellen -> Schwierigkeit liegt in der Optimierung",
+  "history": [
+    {
+      "iteration": 1,
+      "relative_l2": 0.9736450048080826,
+      "mse": 0.4813392250364421
+    },
+    {
+      "iteration": 100,
+      "relative_l2": 0.16447017464247007,
+      "mse": 0.013734861404028713
+    },
+    {
+      "iteration": 200,
+      "relative_l2": 0.04949789048383734,
+      "mse": 0.0012440085209513027
+    },
+    {
+      "iteration": 300,
+      "relative_l2": 0.02368301560744041,
+      "mse": 0.0002847895022974765
+    },
+    {
+      "iteration": 400,
+      "relative_l2": 0.014536183167644021,
+      "mse": 0.00010728790077053325
+    }
+  ]
+}
