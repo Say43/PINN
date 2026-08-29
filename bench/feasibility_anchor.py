@@ -171,6 +171,7 @@ def main() -> None:
         "config": {
             "pde": args.pde,
             "beta": args.beta,
+            "rho": args.rho,
             "domain_points": args.domain_points,
             "backbone": args.backbone,
             "precision": args.precision,
