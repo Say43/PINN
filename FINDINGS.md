@@ -3,6 +3,70 @@
 **Diese Studie ist ein Pilot ohne konfirmatorischen Anspruch.** Berichtet werden
 Effektstärken mit Unsicherheit und Kostenmessungen; Null-Resultate stehen zuerst.
 
+## Nachtrag 2026-08-29 — Reaction ist loesbar, und zwei Versagensarten sind trennbar
+
+Alle folgenden Laeufe sind `NOT_STUDY_DATA` und dienen der Machbarkeitspruefung.
+
+### Erstmals eine geloeste Benchmark-Gleichung
+
+Die Reaction-Gleichung nach Krishnapriyan Anhang A wurde implementiert
+(`src/pdes/reaction.py`). Ihre analytische Loesung erfuellt das Residuum auf
+**1e-31** — die Zielfunktion ist damit garantiert korrekt, ohne interpolierte
+Referenzdatei als Fehlerquelle.
+
+| rho | Domaenenpunkte | bester rel. L2 | |
+|---|---|---|---|
+| 1 | 1600 | 0.0033 | geloest |
+| 3 | 1600 | 0.0087 | geloest |
+| 5 | 400 | 0.981 | gescheitert |
+| 5 | 1600 | **0.0575** | **geloest** |
+| 5.5 | 1600 | 0.981 / 0.117 / 0.990 (Seeds 0/1/2) | Streuung |
+| 6 | 1600 | 0.989 | gescheitert |
+| 7 | 1600 | 0.993 | gescheitert |
+| 7 | 3600 | 0.9998 | gescheitert |
+| 10 | 1600 | 0.996 | gescheitert |
+
+**Die Zeile rho=5 ist der Kern.** Dieselbe Gleichung, derselbe Trainer, viermal so
+viele Punkte — und aus 0.981 wird 0.0575. Krishnapriyan berichtet fuer rho=5 ein
+Versagen; mit ausreichender Aufloesung tritt es nicht auf. Das Gaussprofil der
+Anfangsbedingung hat Breite pi/4; bei 400 Punkten liegen 2.5 Stuetzstellen darueber,
+bei 1600 sind es fuenf.
+
+### Zwei Versagensarten, klar unterscheidbar
+
+Die Kontrolle bei rho=7 mit 3600 statt 1600 Punkten trennt sie:
+
+- **Aliasing** — Loss klein (1e-5 bis 1e-6), Loesung falsch, durch mehr Punkte
+  heilbar. Das war Convection bei beta=50 und Reaction bei rho=5 mit 400 Punkten.
+- **Optimierungskollaps** — Loss bleibt gross (2e-1), Optimierer friert nach wenigen
+  hundert Iterationen ein, durch mehr Punkte **nicht** heilbar. Bei rho=7 wurde das
+  Ergebnis mit 3600 Punkten sogar schlechter (0.9998 gegen 0.993).
+
+Damit ist die naheliegende Verallgemeinerung widerlegt, die Failure-Mode-Literatur
+sei im Wesentlichen Unteraufloesung. Sie gilt fuer einen Teil der Faelle, nicht fuer
+alle.
+
+### Folge fuer die Metrikwahl
+
+Der Uebergang zwischen geloest und kollabiert ist sehr scharf: zwischen rho=5
+(0.0575) und rho=6 (0.989) liegt mehr als eine Groessenordnung. Zwischenwerte
+kommen vor, sind aber selten (rho=5.5, Seed 1: 0.117).
+
+Bei einem derart bimodalen Ausgang misst der Median von log10(rel. L2) wenig — er
+landet auf der einen oder der anderen Seite. Die aussagekraeftige Groesse ist die
+**Erfolgsquote ueber Seeds**. Die Umstellung von Success Rate auf Median in
+PREREGISTRATION.md V3 §5 war fuer einen kontinuierlichen Ausgang richtig begruendet,
+trifft diesen Fall aber nicht.
+
+### Weitere geklaerte Punkte
+
+- **Allen-Cahn:** Der ueberwachte Gegentest erreicht 0.0145 (400 Iterationen,
+  `max_eval=25`). Netz und Referenz sind in Ordnung; das Scheitern unter dem
+  Physics-Loss (0.99) ist ein Optimierungsproblem.
+- **Zurueckgezogen:** Die Behauptung, L-BFGS stehe in diesem Projekt still, war
+  falsch. Ursache war ein fehlendes `max_eval` im Diagnoseskript, nicht im Trainer.
+  Der Studien-Trainer setzt `max_eval=25` seit M1.
+
 ## Aktueller Nachtrag — Machbarkeit und Projektoptionen (2026-08-21)
 
 **Die Studienmatrix bleibt gestoppt.** Die nach M2b ausgefuehrten, ausdruecklich als
