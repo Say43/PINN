@@ -36,15 +36,20 @@ ist nicht lösbar (rel. L2 0.981); bei 1600 sind es fünf und sie ist lösbar (0
 
 **rho = 5.25.** Gemessene Basisrate der MLP-Baseline über fünf Seeds:
 
-| Seed | rel. L2 | Erfolg (< 0.10) |
+| Seed | finaler rel. L2 | Erfolg (< 0.10) |
 |---|---|---|
-| 0 | 0.980 | nein |
-| 1 | 0.993 | nein |
+| 0 | 0.996 | nein |
+| 1 | 0.999 | nein |
 | 2 | 0.109 | nein |
 | 3 | 0.083 | ja |
 | 4 | 0.070 | ja |
 
 **Erfolgsquote 2/5 = 40 %**, Median log10(rel. L2) = −0.964.
+
+Die Tabelle verwendet den finalen Fehler nach 2000 Iterationen. Die zuvor an dieser
+Stelle genannten Werte 0.980 und 0.993 waren die besten protokollierten Zwischenwerte
+der Seeds 0 und 1; die Erfolgsquote und der Median bleiben durch die Korrektur
+unverändert.
 
 Die Wahl fiel auf rho = 5.25, weil dort beide Ausgänge vorkommen. Bei rho = 5.0
 gelingt es (0.058), ab rho = 6 kollabiert es durchgehend (0.989 und schlechter). Eine

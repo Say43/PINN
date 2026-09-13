@@ -1,0 +1,39 @@
+{
+  "pde": {
+    "name": "reaction",
+    "domain_points": 1600,
+    "boundary_points": 100,
+    "initial_points": 100,
+    "evaluation_x": 101,
+    "evaluation_t": 101,
+    "reaction": 5.25
+  },
+  "model": {
+    "backbone": "mlp",
+    "mlp_hidden_dim": 128,
+    "graph_hidden_dim": 56,
+    "num_layers": 4,
+    "graph_k": 8,
+    "diffusion_step": 0.25
+  },
+  "train": {
+    "precision": "fp32",
+    "regularization": "none",
+    "seed": 0,
+    "max_iters": 2000,
+    "history_size": 100,
+    "learning_rate": 1.0,
+    "line_search_fn": "strong_wolfe",
+    "tolerance_grad": 0.0,
+    "tolerance_change": 0.0,
+    "lambda_r": 0.00001,
+    "log_every": 500,
+    "device": "cuda:0",
+    "max_local_gpu_seconds": 175.0
+  },
+  "persistence": {
+    "database": "results/results.sqlite",
+    "backup": "results/results.backup.sqlite",
+    "study_id": "reaction_v5_DRAFT_NOT_STUDY_DATA"
+  }
+}

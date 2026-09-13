@@ -1,6 +1,23 @@
 # Budget
 
-## Rahmen (Stand 2026-08-20, nach Neuskalierung)
+## Aktueller Rahmen fuer V5 (Entwurf, Stand 2026-09-13)
+
+| Posten | Stunden |
+|---|---|
+| Verfuegbare Gesamtquote | **27.0** |
+| Bereits verbraucht | rund **1.48** |
+| V5-Lambda-Auswahl, 4 Laeufe | **0.3** |
+| V5-Hauptmatrix, 60 Laeufe | **7.4** |
+| Reserve | **1.0** |
+
+Der V5-Runner rechnet Kaggle-Session-Wallclock, nicht die Summe beider gleichzeitig
+laufenden T4-Prozesse. Lambda-Auswahl und Hauptmatrix haben getrennte Limits. Die
+Hauptmatrix darf erst nach dem Freeze der V5-Praeregistrierung starten.
+
+Die folgenden Tabellen dokumentieren den historischen V3-Rahmen und dessen
+tatsaechlichen Verbrauch.
+
+## Historischer V3-Rahmen (Stand 2026-08-20, nach Neuskalierung)
 
 | Posten | Stunden |
 |---|---|

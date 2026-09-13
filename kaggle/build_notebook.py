@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 from pathlib import Path
 
 
@@ -17,7 +18,13 @@ def launcher_source(
     calibration_repeats: int = 3,
     budget_stage: str = "calibration",
     cell_wall_budget_seconds: float = 2200.0,
+    source_commit: str | None = None,
+    v5_lambda_r: float | None = None,
+    v5_study_id: str | None = None,
+    v5_prereg_sha256: str | None = None,
 ) -> str:
+    if mode in {"v5_lambda", "v5_matrix"} and hardware != "2xt4":
+        raise ValueError("V5 requires Kaggle 2x T4 hardware")
     mount = code_dataset.split("/", 1)[1]
     bootstrap = ""
     if hardware == "p100":
@@ -38,6 +45,20 @@ def launcher_source(
             "--repeats", str(calibration_repeats), "--budget-stage", budget_stage,
             "--results-dataset", results_dataset,
         ]
+    elif mode in {"v5_lambda", "v5_matrix"}:
+        phase = "lambda" if mode == "v5_lambda" else "matrix"
+        command = [
+            "python", "-m", "kaggle.v5_runner", "--phase", phase,
+            "--config", "configs/reaction_v5.json", "--workers", "2",
+            "--wall-budget-seconds", str(cell_wall_budget_seconds),
+        ]
+        if mode == "v5_matrix":
+            if v5_lambda_r is None or not v5_study_id or not v5_prereg_sha256:
+                raise ValueError("v5_matrix requires lambda_r, study_id, and preregistration hash")
+            command.extend([
+                "--lambda-r", str(v5_lambda_r), "--study-id", v5_study_id,
+                "--prereg-sha256", v5_prereg_sha256,
+            ])
     else:
         if plan_dataset is None:
             raise ValueError("non-M2a notebooks require --plan-dataset")
@@ -67,6 +88,7 @@ for archive in mounted.glob("*.zip"):
 os.chdir(root)
 sys.path.insert(0, str(root))
 os.environ["PINN_RESULTS_DATASET"] = "{results_dataset}"
+os.environ["PINN_SOURCE_COMMIT"] = "{source_commit or 'unknown'}"
 command = {command!r}
 if "__M2_PLAN__" in command:
     plan_paths = list(inputs.rglob("m2_plan.json"))
@@ -90,9 +112,25 @@ def runner_cell_source(index: int, total: int) -> str:
 subprocess.run(command, check=True)
 '''
 
+
+def clean_source_commit() -> str:
+    status = subprocess.check_output(
+        ["git", "status", "--porcelain"], text=True, encoding="utf-8"
+    ).strip()
+    if status:
+        raise RuntimeError("refusing to build a provenance-bearing notebook from a dirty worktree")
+    return subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], text=True, encoding="utf-8"
+    ).strip()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Build a thin Kaggle launcher notebook")
-    parser.add_argument("--mode", choices=("m2a", "m2b", "stage_a", "stage_b"), required=True)
+    parser.add_argument(
+        "--mode",
+        choices=("m2a", "m2b", "stage_a", "stage_b", "v5_lambda", "v5_matrix"),
+        required=True,
+    )
     parser.add_argument("--code-dataset", required=True, help="owner/slug")
     parser.add_argument("--results-dataset", required=True, help="owner/slug")
     parser.add_argument("--plan-dataset", help="owner/slug containing m2_plan.json")
@@ -119,6 +157,9 @@ def main() -> None:
         help="wall budget per runner cell in seconds; must stay clearly below the 3000 s cell timeout",
     )
     parser.add_argument("--kernel-id", required=True, help="owner/kernel-slug")
+    parser.add_argument("--v5-lambda-r", type=float)
+    parser.add_argument("--v5-study-id")
+    parser.add_argument("--v5-prereg-sha256")
     parser.add_argument("--output-dir", type=Path, default=Path("kaggle/generated"))
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -136,11 +177,13 @@ def main() -> None:
             "source": [line + "\n" for line in source.splitlines()],
         }
 
+    source_commit = clean_source_commit()
     cells = [code_cell(launcher_source(
         args.mode, args.code_dataset, args.results_dataset,
         args.plan_dataset, args.hardware, args.point_scheme,
         tuple(args.calibration_backbones), tuple(args.calibration_precisions),
         args.calibration_repeats, args.budget_stage, args.cell_wall_budget,
+        source_commit, args.v5_lambda_r, args.v5_study_id, args.v5_prereg_sha256,
     ))]
     cells.extend(
         code_cell(runner_cell_source(index + 1, args.runner_cells))

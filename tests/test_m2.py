@@ -89,12 +89,14 @@ class M2Tests(unittest.TestCase):
 
     def test_notebook_launcher_contains_no_project_source(self) -> None:
         source = launcher_source(
-            "m2b", "owner/pinn-code", "owner/pinn-results", "owner/pinn-m2-plan", "p100"
+            "m2b", "owner/pinn-code", "owner/pinn-results", "owner/pinn-m2-plan", "p100",
+            source_commit="0123456789abcdef",
         )
         self.assertIn("/kaggle/input/pinn-code", source)
         self.assertIn("python', '-m', 'kaggle.runner", source)
         self.assertIn('inputs.rglob("m2_plan.json")', source)
         self.assertIn("torch==2.5.1", source)
+        self.assertIn('PINN_SOURCE_COMMIT"] = "0123456789abcdef"', source)
         self.assertNotIn("class PDEGraphNet", source)
 
     def test_t4_launcher_does_not_replace_kaggle_torch(self) -> None:
@@ -102,6 +104,27 @@ class M2Tests(unittest.TestCase):
             "m2a", "owner/pinn-code", "owner/pinn-results", None, "2xt4"
         )
         self.assertNotIn("download.pytorch.org", source)
+
+    def test_v5_lambda_launcher_uses_two_gpu_parent_runner(self) -> None:
+        source = launcher_source(
+            "v5_lambda", "owner/pinn-code", "owner/pinn-results", None, "2xt4",
+            source_commit="0123456789abcdef",
+        )
+        self.assertIn("kaggle.v5_runner", source)
+        self.assertIn("'--phase', 'lambda'", source)
+        self.assertIn("'--workers', '2'", source)
+
+    def test_v5_matrix_launcher_requires_frozen_inputs(self) -> None:
+        with self.assertRaises(ValueError):
+            launcher_source(
+                "v5_matrix", "owner/pinn-code", "owner/pinn-results", None, "2xt4"
+            )
+
+    def test_v5_launcher_rejects_single_gpu_hardware(self) -> None:
+        with self.assertRaises(ValueError):
+            launcher_source(
+                "v5_lambda", "owner/pinn-code", "owner/pinn-results", None, "p100"
+            )
 
     def test_calibration_uses_minimal_valid_evaluation_grid(self) -> None:
         base = ExperimentConfig.from_json(Path("configs/stage_a.json"))

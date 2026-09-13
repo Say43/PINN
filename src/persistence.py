@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
 import sqlite3
 import subprocess
@@ -22,6 +23,9 @@ def utc_now() -> str:
 
 
 def git_commit() -> str:
+    supplied = os.environ.get("PINN_SOURCE_COMMIT", "").strip()
+    if supplied:
+        return supplied
     try:
         return subprocess.check_output(
             ["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL
@@ -108,6 +112,7 @@ class ResultStore:
                 history_json TEXT,
                 error_type TEXT,
                 error_message TEXT,
+                runtime_json TEXT,
                 git_commit TEXT NOT NULL,
                 UNIQUE(trial_key, attempt_no)
             );
@@ -121,6 +126,8 @@ class ResultStore:
         columns = {row[1] for row in self.connection.execute("PRAGMA table_info(runs)")}
         if "solver_nfe" not in columns:
             self.connection.execute("ALTER TABLE runs ADD COLUMN solver_nfe INTEGER")
+        if "runtime_json" not in columns:
+            self.connection.execute("ALTER TABLE runs ADD COLUMN runtime_json TEXT")
 
     def recover_stale_runs(self) -> int:
         with self.transaction() as connection:
@@ -203,6 +210,7 @@ class ResultStore:
             "history_json": json.dumps(values.get("history", []), sort_keys=True),
             "error_type": values.get("error_type"),
             "error_message": values.get("error_message"),
+            "runtime_json": json.dumps(values.get("runtime", {}), sort_keys=True),
         }
         with self.transaction() as connection:
             connection.execute(
@@ -215,7 +223,8 @@ class ResultStore:
                     relative_l2_censored=:relative_l2_censored, success=:success,
                     time_to_target_seconds=:time_to_target_seconds,
                     final_metrics_json=:final_metrics_json, history_json=:history_json,
-                    error_type=:error_type, error_message=:error_message
+                    error_type=:error_type, error_message=:error_message,
+                    runtime_json=:runtime_json
                 WHERE run_id=:run_id
                 """,
                 {"run_id": run_id, "status": status, **payload},

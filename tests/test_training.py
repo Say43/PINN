@@ -8,7 +8,7 @@ from src.train import run, train_once
 
 class TrainingTests(unittest.TestCase):
     def test_all_stage_a_condition_families_take_one_step(self) -> None:
-        for pde_name in ("convection", "allen_cahn"):
+        for pde_name in ("convection", "allen_cahn", "reaction"):
             for backbone in ("mlp", "grand", "gread"):
                 for precision in ("fp32", "fp64"):
                     for regularization in ("none", "double_backprop"):

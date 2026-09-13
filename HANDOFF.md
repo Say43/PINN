@@ -1,4 +1,35 @@
-# Naechster Schritt (Stand 2026-08-21 — Studienmatrix gestoppt)
+# Naechster Schritt (Stand 2026-09-13 — V5-Auswahlphase vorbereitet)
+
+Nichts laeuft. Der V3-Pilot ist beendet und bleibt wegen des gescheiterten M2b-Gates
+ohne Architekturaussage. V5 untersucht stattdessen Reaction bei `rho = 5.25`; die
+Praeregistrierung ist weiterhin ein Entwurf und die Hauptmatrix wurde nicht gestartet.
+
+Neu vorbereitet und getestet:
+
+- `configs/reaction_v5.json`: explizit als Entwurfs-/Nichtstudiendaten-Konfiguration
+  markierte Basis mit 1600 Domaenenpunkten und 2000 L-BFGS-Iterationen.
+- `bench/v5.py`: exakt vier Lambda-Auswahlbedingungen und anschließend, erst nach
+  Freeze, die vollstaendige 60-Lauf-Matrix.
+- `kaggle/v5_runner.py`: zwei GPU-Worker; nur der Elternprozess schreibt SQLite und
+  publiziert Ergebnisse. Resume, Quota- und Zellzeit-Grenzen bleiben aktiv.
+- Jeder neue Lauf speichert den uebergebenen Quell-Commit sowie Torch-, CUDA- und
+  GPU-Metadaten. Der Notebook-Generator verweigert provenance-tragende Builds aus
+  einem unsauberen Working Tree.
+- Die analytische Reaction-Loesung ist jetzt fuer Basis- und Double-Backprop-Loss
+  getestet. Vollstaendige Suite: 42 Tests gruen.
+
+Naechster externer Schritt ist ausschließlich die V5-Lambda-Auswahl auf 2x T4. Die
+Hauptmatrix ist technisch blockiert, solange `PREREGISTRATION-V5.md` den Status
+`ENTWURF, NICHT eingefroren` traegt oder ihr SHA-256 nicht mit dem Launcher
+uebereinstimmt. Nach den vier Auswahllaeufen: finalen relativen L2 gemeinsam
+auswerten, `lambda_r` festlegen, V5 einfrieren und erst dann die Matrix erzeugen.
+
+Die folgenden Abschnitte sind historische Uebergaben und werden durch diesen Stand
+ersetzt.
+
+---
+
+# Historischer Stand 2026-08-21 — Studienmatrix gestoppt
 
 Nichts laeuft. Kein Kaggle-Kernel und kein lokaler Diagnoseprozess aktiv.
 Verbraucht bleiben rund 1.48 von 27 verfuegbaren GPU-Stunden; alle neuen

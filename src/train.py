@@ -49,6 +49,20 @@ def _is_local_cuda(device: torch.device) -> bool:
     return device.type == "cuda" and "KAGGLE_KERNEL_RUN_TYPE" not in os.environ
 
 
+def _runtime_metadata(device: torch.device) -> dict:
+    metadata = {
+        "device": str(device),
+        "torch_version": str(torch.__version__),
+        "cuda_runtime": torch.version.cuda,
+    }
+    if device.type == "cuda":
+        metadata["device_name"] = torch.cuda.get_device_name(device)
+        metadata["device_capability"] = list(torch.cuda.get_device_capability(device))
+    else:
+        metadata["device_name"] = "cpu"
+    return metadata
+
+
 def _evaluate(model, pde, config, device, dtype):
     evaluation_coords, reference = pde.evaluation_grid(device=device, dtype=dtype)
     topology = None
@@ -151,6 +165,7 @@ def train_once(config: ExperimentConfig) -> TrainingResult:
         "time_to_target_seconds": time_to_target,
         "final_metrics": final_metrics,
         "history": history,
+        "runtime": _runtime_metadata(device),
     }
     status = "numerical_fail" if censored and not math.isfinite(final_error) else "completed"
     return TrainingResult(status, values)
@@ -163,13 +178,19 @@ def run(config: ExperimentConfig, *, force: bool = False) -> dict:
         if not force and store.has_terminal_result(key):
             return {"status": "skipped", "trial_key": key, "reason": "terminal result exists"}
         run_id, key, attempt_no = store.start_attempt(config)
+        runtime = {"device": config.train.device}
         try:
+            runtime = _runtime_metadata(torch.device(config.train.device))
             result = train_once(config)
         except (torch.cuda.OutOfMemoryError, LocalGpuTimeLimit, KeyboardInterrupt) as error:
             store.finish_attempt(
                 run_id,
                 status="infra_fail",
-                values={"error_type": type(error).__name__, "error_message": str(error)},
+                values={
+                    "error_type": type(error).__name__,
+                    "error_message": str(error),
+                    "runtime": runtime,
+                },
             )
             raise
         except FloatingPointError as error:
@@ -179,6 +200,7 @@ def run(config: ExperimentConfig, *, force: bool = False) -> dict:
                 "success": False,
                 "error_type": type(error).__name__,
                 "error_message": str(error),
+                "runtime": runtime,
             }
             store.finish_attempt(run_id, status="numerical_fail", values=values)
             return {"status": "numerical_fail", "trial_key": key, "attempt_no": attempt_no}
@@ -186,7 +208,11 @@ def run(config: ExperimentConfig, *, force: bool = False) -> dict:
             store.finish_attempt(
                 run_id,
                 status="infra_fail",
-                values={"error_type": type(error).__name__, "error_message": str(error)},
+                values={
+                    "error_type": type(error).__name__,
+                    "error_message": str(error),
+                    "runtime": runtime,
+                },
             )
             raise
         store.finish_attempt(run_id, status=result.status, values=result.values)
