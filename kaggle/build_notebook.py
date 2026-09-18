@@ -24,7 +24,7 @@ def launcher_source(
     v5_prereg_sha256: str | None = None,
     v5_batch_estimate_seconds: float | None = None,
 ) -> str:
-    if mode in {"v5_lambda", "v5_matrix"} and hardware != "2xt4":
+    if mode in {"v5_profile", "v5_lambda", "v5_matrix"} and hardware != "2xt4":
         raise ValueError("V5 requires Kaggle 2x T4 hardware")
     mount = code_dataset.split("/", 1)[1]
     bootstrap = ""
@@ -46,6 +46,8 @@ def launcher_source(
             "--repeats", str(calibration_repeats), "--budget-stage", budget_stage,
             "--results-dataset", results_dataset,
         ]
+    elif mode == "v5_profile":
+        command = ["python", "-m", "analysis.profile_gpu", "--iters", "25"]
     elif mode in {"v5_lambda", "v5_matrix"}:
         if v5_batch_estimate_seconds is None or v5_batch_estimate_seconds <= 0:
             raise ValueError("V5 requires a measured batch estimate before launcher generation")
@@ -71,7 +73,7 @@ def launcher_source(
             "--plan", "__M2_PLAN__",
             "--wall-budget-seconds", str(cell_wall_budget_seconds),
         ]
-    verify_payload = mode in {"v5_lambda", "v5_matrix"}
+    verify_payload = mode in {"v5_profile", "v5_lambda", "v5_matrix"}
     return f'''import hashlib, json, os, shutil, subprocess, sys, zipfile
 from pathlib import Path
 
@@ -141,7 +143,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Build a thin Kaggle launcher notebook")
     parser.add_argument(
         "--mode",
-        choices=("m2a", "m2b", "stage_a", "stage_b", "v5_lambda", "v5_matrix"),
+        choices=("m2a", "m2b", "stage_a", "stage_b", "v5_profile", "v5_lambda", "v5_matrix"),
         required=True,
     )
     parser.add_argument("--code-dataset", required=True, help="owner/slug")

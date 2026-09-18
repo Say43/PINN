@@ -115,6 +115,15 @@ class M2Tests(unittest.TestCase):
         self.assertIn("'--phase', 'lambda'", source)
         self.assertIn("'--workers', '2'", source)
 
+    def test_v5_profile_launcher_verifies_exact_source(self) -> None:
+        source = launcher_source(
+            "v5_profile", "owner/pinn-code", "owner/pinn-results", None,
+            "2xt4", source_commit="abc123",
+        )
+        self.assertIn("analysis.profile_gpu", source)
+        self.assertIn("pinn_payload_manifest.json", source)
+        self.assertIn("abc123", source)
+
     def test_v5_matrix_launcher_requires_frozen_inputs(self) -> None:
         with self.assertRaises(ValueError):
             launcher_source(

@@ -17,6 +17,7 @@ RUNTIME_FILES = (
     "kaggle/__init__.py",
     "kaggle/publish.py",
     "kaggle/v5_runner.py",
+    "analysis/profile_gpu.py",
 )
 
 
