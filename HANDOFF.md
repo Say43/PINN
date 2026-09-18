@@ -203,8 +203,10 @@ stehenden historischen Statusangaben.
   Beide schrieben echte SQLite-Zeilen und wurden beim zweiten Aufruf übersprungen.
 - `lambda_r = 1.0`, outcome-blind aus Initial-Lossskalen auf CPU gewählt. Artefakt:
   `results/lambda_r_selection.json`. Die lokale GPU wurde nicht verwendet.
-- Kanonische Allen–Cahn-Referenz eingebunden: `data/allen_cahn.mat`, SHA-256
-  `ce640f188e334520f636d3d650cae6056a92a486546d40889bff93610bdbfa71`.
+- Allen–Cahn-Referenz eingebunden: `data/allen_cahn.mat`, urspruenglich SHA-256
+  `ce640f188e334520f636d3d650cae6056a92a486546d40889bff93610bdbfa71` (Kopie aus
+  `miniHuiHui/PINN_FP64`); am 2026-09-18 aus Lizenzgruenden durch eine im Repository
+  erzeugte Loesung ersetzt (D-10), SHA-256 `369b7fec…7763`.
 - M2 vorbereitet: `bench/calibrate.py`, `bench/plan.py`, Quota-Guard,
   `kaggle/build_notebook.py`, serieller Runner und fail-closed Publikation nach
   jedem terminalen Lauf. Details: `docs/execution-contract.md`.

@@ -255,8 +255,13 @@ and publish after every terminal run. The local diagnostics are reproduced with
 
 ## 7. Data, licences and provenance
 
-Code and documentation: MIT. `data/allen_cahn.mat` is the canonical Allen–Cahn
-reference solution from the original PINNs release (Raissi et al., MIT). Sources
+Code and documentation: MIT. `data/allen_cahn.mat` is generated in-repository by
+`data/make_allen_cahn_reference.py` (Fourier pseudo-spectral, ETDRK4, float64) and
+has no external data dependency; it agrees with the Chebfun reference of the original
+PINNs release (Raissi et al., MIT) to a relative L2 error of 1.7e-5. Until 2026-09-18
+the file was a copy from `miniHuiHui/PINN_FP64` (Xu et al. 2025), a repository without
+a licence, and an earlier version of this section misattributed it to Raissi et al.;
+see DEVIATIONS.md D-10 and data/README.md. Sources
 read in full for the baseline definitions: Krishnapriyan et al. 2021
 (arXiv 2109.01050), PINNsformer (2307.11833), GRAND (2106.10934), GREAD (2211.14208),
 "FP64 is All You Need" (2505.10949), Andersen & Matsubara 2026 (2605.30910),

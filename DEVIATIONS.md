@@ -192,3 +192,26 @@ Abweichungen von der Literatur**, die vor dem Einfrieren bewusst getroffen wurde
   Primaermetrik bleiben unveraendert; nur die Trainingskurven werden groeber.
 - **Verworfen:** Zwischenauswertung auf 51x51 zu verkleinern. Ersparnis nur 0.05 bis
   0.25 h, dafuer ein Eingriff in den Trainer. Nicht gerechtfertigt.
+
+## D-10 — Allen–Cahn-Referenzloesung ersetzt: Lizenz und falsche Quellenangabe
+- **Datum:** 2026-09-18
+- **Abschnitt:** Daten/Provenienz, nicht Praeregistrierung; betrifft Stage B (Allen–Cahn)
+- **Befund:** `data/allen_cahn.mat` war eine Kopie aus `miniHuiHui/PINN_FP64` (Xu et al.
+  2025). Dieses Repository traegt keine Lizenz; die Datei wurde dennoch im MIT-Repo und im
+  Kaggle-Code-Dataset weiterverteilt. README §7 gab sie zusaetzlich falsch als Datei aus dem
+  Original-PINN-Release (Raissi et al., MIT) aus. Geprueft durch Vergleich mit
+  `maziarraissi/PINNs/main/Data/AC.mat`: anderer Hash, anderes x-Gitter.
+- **Vorher:** Fremddatei, 512 Punkte endpunkt-inklusiv, SHA-256 `ce640f18…bfa71`.
+- **Nachher:** Eigene Loesung aus `data/make_allen_cahn_reference.py` (Fourier-
+  Pseudospektral, ETDRK4, dt = 1e-4, float64), 513 Punkte inkl. periodischem Bild x = +1,
+  SHA-256 `369b7fec…7763`. Abweichung zur alten Datei auf deren Gitter: relativer L2
+  2.0e-5, punktweise max. 1.1e-3 an den Fronten; zur Raissi-Referenz: relativer L2 1.7e-5.
+- **Ergebnisse gesichtet:** ja. Die vorhandenen `results/ac_*`-Laeufe wurden gegen die
+  alte Datei ausgewertet und **nicht** neu berechnet. Die Referenzaenderung liegt zwei
+  bis drei Groessenordnungen unter den dort berichteten Fehlern, kann die Aussagen also
+  nicht veraendern; ein Neulauf kostet GPU-Budget ohne Erkenntnisgewinn.
+- **Verantwortlich:** Die Herkunftsangabe in README §7 wurde nicht gegen data/README.md
+  abgeglichen; die Lizenzpruefung der Quelle fehlte beim Einbinden am 2026-08-20.
+- **Konsequenz:** Externe Datendateien nur noch mit nachgewiesener Lizenz oder als
+  im Repository reproduzierbare Erzeugung; Hash und Quelle an genau einer Stelle
+  (data/README.md) fuehren, README §7 verweist dorthin.

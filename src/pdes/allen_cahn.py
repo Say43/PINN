@@ -116,7 +116,7 @@ class AllenCahnPDE(PDE):
             data = loadmat(path)
             x_values = np.asarray(data["x"]).reshape(-1)
             t_values = np.asarray(data["t"]).reshape(-1)
-            # The canonical FP64 artifact stores usol as [time, space].
+            # data/make_allen_cahn_reference.py stores usol as [time, space].
             solution = np.real(np.asarray(data["usol"])).T
         else:
             data = np.load(path)
