@@ -31,6 +31,7 @@ class TrainingTests(unittest.TestCase):
                                 ),
                                 model=ModelConfig(
                                     backbone=backbone,
+                                    graph_context="fixed_support" if pde_name == "reaction" else "legacy_detached",
                                     mlp_hidden_dim=8,
                                     graph_hidden_dim=6,
                                     num_layers=1,

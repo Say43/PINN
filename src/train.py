@@ -67,9 +67,12 @@ def _evaluate(model, pde, config, device, dtype):
     evaluation_coords, reference = pde.evaluation_grid(device=device, dtype=dtype)
     topology = None
     if config.model.backbone != "mlp":
-        topology = build_knn_graph(
-            pde.normalize_coords(evaluation_coords), k=config.model.graph_k
-        ).to(device)
+        if config.model.graph_context == "fixed_support":
+            topology = model.query_topology(evaluation_coords)
+        else:
+            topology = build_knn_graph(
+                pde.normalize_coords(evaluation_coords), k=config.model.graph_k
+            ).to(device)
     with torch.no_grad():
         prediction = model(evaluation_coords, topology)
         value = float(relative_l2(prediction, reference).cpu())
@@ -85,11 +88,14 @@ def train_once(config: ExperimentConfig) -> TrainingResult:
     pde = create_pde(config.pde)
     batch = pde.collocation().to(device=device, dtype=dtype)
     topology = None
-    if config.model.backbone != "mlp":
+    if config.model.backbone != "mlp" and config.model.graph_context != "fixed_support":
         topology = build_knn_graph(
             pde.normalize_coords(batch.coords), k=config.model.graph_k
         ).to(device)
     model = create_model(config.model, pde.bounds).to(device=device, dtype=dtype)
+    if config.model.backbone != "mlp" and config.model.graph_context == "fixed_support":
+        model.set_support(batch.coords)
+        topology = model.query_topology(batch.coords)
     parameter_count = count_parameters(model)
     optimizer = torch.optim.LBFGS(
         model.parameters(),

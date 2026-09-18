@@ -1,8 +1,9 @@
 import unittest
 import tempfile
+from dataclasses import replace
 from pathlib import Path
 
-from bench.v5 import LAMBDA_CANDIDATES, lambda_selection_conditions, study_conditions
+from bench.v5 import LAMBDA_CANDIDATES, lambda_selection_conditions, study_conditions, validate_v5_base
 from src.config import ExperimentConfig
 from kaggle.v5_runner import V5QuotaState, _verify_frozen_preregistration
 
@@ -38,6 +39,11 @@ class V5Tests(unittest.TestCase):
     def test_draft_id_cannot_be_used_for_study_matrix(self) -> None:
         with self.assertRaises(ValueError):
             list(study_conditions(self.base, lambda_r=1.0e-4, study_id="reaction_v5_DRAFT"))
+
+    def test_v5_rejects_legacy_graph_context(self) -> None:
+        legacy = replace(self.base, model=replace(self.base.model, graph_context="legacy_detached"))
+        with self.assertRaises(ValueError):
+            validate_v5_base(legacy)
 
     def test_matrix_preflight_rejects_draft_preregistration(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

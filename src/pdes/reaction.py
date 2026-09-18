@@ -11,8 +11,9 @@ Analytische Loesung (Gl. 15):
 Warum diese Gleichung: Sie hat keinen Ortsableitungsterm und damit keine
 oszillierende Loesung — die Nyquist-Falle aus FINDINGS.md §2 existiert hier nicht.
 Die Loesung ist glatt und monoton in t. Als Kontrast zu Convection ist sie
-strukturell aussagekraeftig: GRAND kann nur diffundieren und sollte hier nicht
-helfen, GREAD hat einen Reaktionsterm und sollte es.
+strukturell aussagekraeftig: GRAND hat nur einen Diffusionsoperator, waehrend
+GREAD zusaetzlich einen Reaktionsterm besitzt. Ob das die Optimierung verbessert,
+ist eine empirische Frage; sein Term ist nicht mit dem logistischen PDE-Term identisch.
 
 Berichtete Fehler bei Krishnapriyan: Tab. E.2 fuer rho in {5, ..., 10}.
 """

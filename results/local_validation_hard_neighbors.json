@@ -1,0 +1,169 @@
+{
+  "note": "LOCAL_CPU_NOT_STUDY_DATA; untrained validity probes, no performance ranking",
+  "seeds": [
+    101,
+    102,
+    103
+  ],
+  "model": {
+    "backbone": "mlp",
+    "graph_context": "fixed_support",
+    "mlp_hidden_dim": 128,
+    "graph_hidden_dim": 56,
+    "num_layers": 4,
+    "graph_k": 8,
+    "diffusion_step": 0.25
+  },
+  "gates": {
+    "derivatives": true,
+    "query_batch_invariance": true,
+    "continuity": false
+  },
+  "ready_for_training_comparison": false,
+  "training_comparison": "not run; validity gate first",
+  "sample_size": "deferred until a valid primary comparison and effect size are specified",
+  "wall_seconds": 11.006499199895188,
+  "rows": [
+    {
+      "backbone": "mlp",
+      "seed": 101,
+      "temporal_derivative_relative_error": 1.0584801157625179e-10,
+      "query_batch_max_difference": 1.1102230246251565e-16,
+      "neighbour_switch": null
+    },
+    {
+      "backbone": "grand",
+      "seed": 101,
+      "temporal_derivative_relative_error": 5.200036623206116e-11,
+      "query_batch_max_difference": 9.71445146547012e-17,
+      "neighbour_switch": {
+        "x": 2.371,
+        "t": 0.25708974595405026,
+        "deltas": [
+          1e-05,
+          1e-07,
+          1e-09
+        ],
+        "absolute_jumps": [
+          0.0015998521870883853,
+          0.0016060005432956478,
+          0.0016060620268561338
+        ]
+      }
+    },
+    {
+      "backbone": "gread",
+      "seed": 101,
+      "temporal_derivative_relative_error": 1.0696616464228857e-10,
+      "query_batch_max_difference": 6.938893903907228e-17,
+      "neighbour_switch": {
+        "x": 2.371,
+        "t": 0.25708974595405026,
+        "deltas": [
+          1e-05,
+          1e-07,
+          1e-09
+        ],
+        "absolute_jumps": [
+          0.0016532644867652269,
+          0.0016596495026664076,
+          0.0016597133528236524
+        ]
+      }
+    },
+    {
+      "backbone": "mlp",
+      "seed": 102,
+      "temporal_derivative_relative_error": 2.6477994283134895e-10,
+      "query_batch_max_difference": 8.326672684688674e-17,
+      "neighbour_switch": null
+    },
+    {
+      "backbone": "grand",
+      "seed": 102,
+      "temporal_derivative_relative_error": 6.298622569073577e-11,
+      "query_batch_max_difference": 4.85722573273506e-17,
+      "neighbour_switch": {
+        "x": 2.371,
+        "t": 0.2419721677420239,
+        "deltas": [
+          1e-05,
+          1e-07,
+          1e-09
+        ],
+        "absolute_jumps": [
+          0.0028697338752041515,
+          0.002877607739546456,
+          0.002877686478189298
+        ]
+      }
+    },
+    {
+      "backbone": "gread",
+      "seed": 102,
+      "temporal_derivative_relative_error": 8.26549606013453e-11,
+      "query_batch_max_difference": 5.551115123125783e-17,
+      "neighbour_switch": {
+        "x": 2.371,
+        "t": 0.2419721677420239,
+        "deltas": [
+          1e-05,
+          1e-07,
+          1e-09
+        ],
+        "absolute_jumps": [
+          0.0030488533288928338,
+          0.003057526323312673,
+          0.0030576130532562334
+        ]
+      }
+    },
+    {
+      "backbone": "mlp",
+      "seed": 103,
+      "temporal_derivative_relative_error": 3.519418032380845e-10,
+      "query_batch_max_difference": 8.326672684688674e-17,
+      "neighbour_switch": null
+    },
+    {
+      "backbone": "grand",
+      "seed": 103,
+      "temporal_derivative_relative_error": 5.1123459061214545e-11,
+      "query_batch_max_difference": 5.551115123125783e-17,
+      "neighbour_switch": {
+        "x": 2.371,
+        "t": 0.25708974595405026,
+        "deltas": [
+          1e-05,
+          1e-07,
+          1e-09
+        ],
+        "absolute_jumps": [
+          0.0007892489660414059,
+          0.000797430235202623,
+          0.0007975120478926206
+        ]
+      }
+    },
+    {
+      "backbone": "gread",
+      "seed": 103,
+      "temporal_derivative_relative_error": 9.121235197200826e-11,
+      "query_batch_max_difference": 5.551115123125783e-17,
+      "neighbour_switch": {
+        "x": 2.371,
+        "t": 0.25708974595405026,
+        "deltas": [
+          1e-05,
+          1e-07,
+          1e-09
+        ],
+        "absolute_jumps": [
+          0.0008476094489891783,
+          0.000856583873991415,
+          0.0008566736182394064
+        ]
+      }
+    }
+  ]
+}

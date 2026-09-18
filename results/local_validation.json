@@ -1,0 +1,169 @@
+{
+  "note": "LOCAL_CPU_NOT_STUDY_DATA; untrained validity probes, no performance ranking",
+  "seeds": [
+    101,
+    102,
+    103
+  ],
+  "model": {
+    "backbone": "mlp",
+    "graph_context": "fixed_support",
+    "mlp_hidden_dim": 128,
+    "graph_hidden_dim": 56,
+    "num_layers": 4,
+    "graph_k": 8,
+    "diffusion_step": 0.25
+  },
+  "gates": {
+    "derivatives": true,
+    "query_batch_invariance": true,
+    "continuity": true
+  },
+  "ready_for_training_comparison": true,
+  "training_comparison": "not run; validity gate first",
+  "sample_size": "deferred until a valid primary comparison and effect size are specified",
+  "wall_seconds": 11.16937300004065,
+  "rows": [
+    {
+      "backbone": "mlp",
+      "seed": 101,
+      "temporal_derivative_relative_error": 1.0584801157625179e-10,
+      "query_batch_max_difference": 1.1102230246251565e-16,
+      "neighbour_switch": null
+    },
+    {
+      "backbone": "grand",
+      "seed": 101,
+      "temporal_derivative_relative_error": 2.2204817775974903e-10,
+      "query_batch_max_difference": 5.551115123125783e-17,
+      "neighbour_switch": {
+        "x": 2.371,
+        "t": 0.2131802200529419,
+        "deltas": [
+          1e-05,
+          1e-07,
+          1e-09
+        ],
+        "absolute_jumps": [
+          2.6193039365934867e-06,
+          2.6193039376343208e-08,
+          2.6193043567435126e-10
+        ]
+      }
+    },
+    {
+      "backbone": "gread",
+      "seed": 101,
+      "temporal_derivative_relative_error": 1.1858580309002795e-10,
+      "query_batch_max_difference": 1.5265566588595902e-16,
+      "neighbour_switch": {
+        "x": 2.371,
+        "t": 0.210834789327906,
+        "deltas": [
+          1e-05,
+          1e-07,
+          1e-09
+        ],
+        "absolute_jumps": [
+          2.76356267794875e-06,
+          2.7635626856370443e-08,
+          2.763562434449085e-10
+        ]
+      }
+    },
+    {
+      "backbone": "mlp",
+      "seed": 102,
+      "temporal_derivative_relative_error": 2.6477994283134895e-10,
+      "query_batch_max_difference": 8.326672684688674e-17,
+      "neighbour_switch": null
+    },
+    {
+      "backbone": "grand",
+      "seed": 102,
+      "temporal_derivative_relative_error": 1.146581333028817e-09,
+      "query_batch_max_difference": 5.551115123125783e-17,
+      "neighbour_switch": {
+        "x": 2.371,
+        "t": 0.2003444864104022,
+        "deltas": [
+          1e-05,
+          1e-07,
+          1e-09
+        ],
+        "absolute_jumps": [
+          1.7516034377523804e-06,
+          1.7516034109266165e-08,
+          1.7516041395104764e-10
+        ]
+      }
+    },
+    {
+      "backbone": "gread",
+      "seed": 102,
+      "temporal_derivative_relative_error": 3.4680604861800965e-10,
+      "query_batch_max_difference": 2.7755575615628914e-17,
+      "neighbour_switch": {
+        "x": 2.371,
+        "t": 0.2003444864104022,
+        "deltas": [
+          1e-05,
+          1e-07,
+          1e-09
+        ],
+        "absolute_jumps": [
+          2.234247743787554e-06,
+          2.2342477173920017e-08,
+          2.234248341892453e-10
+        ]
+      }
+    },
+    {
+      "backbone": "mlp",
+      "seed": 103,
+      "temporal_derivative_relative_error": 3.519418032380845e-10,
+      "query_batch_max_difference": 8.326672684688674e-17,
+      "neighbour_switch": null
+    },
+    {
+      "backbone": "grand",
+      "seed": 103,
+      "temporal_derivative_relative_error": 9.597151874136161e-11,
+      "query_batch_max_difference": 2.7755575615628914e-17,
+      "neighbour_switch": {
+        "x": 2.371,
+        "t": 0.2196534840985624,
+        "deltas": [
+          1e-05,
+          1e-07,
+          1e-09
+        ],
+        "absolute_jumps": [
+          7.301758516820023e-06,
+          7.301758524203006e-08,
+          7.301758364608446e-10
+        ]
+      }
+    },
+    {
+      "backbone": "gread",
+      "seed": 103,
+      "temporal_derivative_relative_error": 7.317612345076852e-11,
+      "query_batch_max_difference": 5.551115123125783e-17,
+      "neighbour_switch": {
+        "x": 2.371,
+        "t": 0.2196534840985624,
+        "deltas": [
+          1e-05,
+          1e-07,
+          1e-09
+        ],
+        "absolute_jumps": [
+          7.960558160435838e-06,
+          7.960558158492947e-08,
+          7.960558739972257e-10
+        ]
+      }
+    }
+  ]
+}

@@ -41,6 +41,7 @@ class PDEConfig:
 @dataclass(frozen=True)
 class ModelConfig:
     backbone: BackboneName = "mlp"
+    graph_context: Literal["legacy_detached", "fixed_support"] = "legacy_detached"
     mlp_hidden_dim: int = 128
     graph_hidden_dim: int = 56
     num_layers: int = 4
@@ -48,6 +49,8 @@ class ModelConfig:
     diffusion_step: float = 0.25
 
     def __post_init__(self) -> None:
+        if self.graph_context not in {"legacy_detached", "fixed_support"}:
+            raise ValueError("invalid graph_context")
         if self.num_layers < 1:
             raise ValueError("num_layers must be positive")
         if self.graph_k < 1:
@@ -111,7 +114,11 @@ class ExperimentConfig:
         return asdict(self)
 
     def canonical_json(self) -> str:
-        return json.dumps(self.to_dict(), sort_keys=True, separators=(",", ":"))
+        raw = self.to_dict()
+        # Preserve pre-existing V3 trial keys for the unchanged legacy path.
+        if self.model.graph_context == "legacy_detached":
+            raw["model"].pop("graph_context")
+        return json.dumps(raw, sort_keys=True, separators=(",", ":"))
 
     def with_condition(
         self,

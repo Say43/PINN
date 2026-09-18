@@ -1,0 +1,106 @@
+{
+  "note": "LOCAL_CPU_NOT_STUDY_DATA; 50 iterations, not the 2000-iteration V5 matrix",
+  "seeds": [
+    101,
+    102,
+    103
+  ],
+  "precision": "fp32",
+  "regularization": "none",
+  "max_iters": 50,
+  "timeout_per_run_seconds": 50,
+  "conclusions": "numerical smoke and cost check only; no ranking or success-rate inference",
+  "rows": [
+    {
+      "backbone": "mlp",
+      "seed": 101,
+      "status": "completed",
+      "relative_l2": 0.9976471066474915,
+      "initial_relative_l2": 1.0378278493881226,
+      "iterations": 50,
+      "wall_seconds": 2.159635999938473,
+      "final_metrics": {
+        "loss_total": 0.20563951134681702,
+        "loss_base": 0.20563951134681702,
+        "loss_domain": 0.014882955700159073,
+        "loss_boundary": 1.0323247806809377e-05,
+        "loss_initial": 0.1907462328672409,
+        "loss_regularizer": 0.0,
+        "relative_l2_raw": 0.9976471066474915,
+        "relative_l2_log10": -0.0010230526389114866
+      },
+      "function_evaluations": 104
+    },
+    {
+      "backbone": "grand",
+      "seed": 101,
+      "status": "diagnostic_timeout"
+    },
+    {
+      "backbone": "gread",
+      "seed": 101,
+      "status": "diagnostic_timeout"
+    },
+    {
+      "backbone": "mlp",
+      "seed": 102,
+      "status": "completed",
+      "relative_l2": 0.9964395761489868,
+      "initial_relative_l2": 0.9836178421974182,
+      "iterations": 50,
+      "wall_seconds": 1.7653811000054702,
+      "final_metrics": {
+        "loss_total": 0.20550744235515594,
+        "loss_base": 0.20550744235515594,
+        "loss_domain": 0.01592298597097397,
+        "loss_boundary": 8.041358341870364e-06,
+        "loss_initial": 0.1895764172077179,
+        "loss_regularizer": 0.0,
+        "relative_l2_raw": 0.9964395761489868,
+        "relative_l2_log10": -0.0015490316756870423
+      },
+      "function_evaluations": 104
+    },
+    {
+      "backbone": "grand",
+      "seed": 102,
+      "status": "diagnostic_timeout"
+    },
+    {
+      "backbone": "gread",
+      "seed": 102,
+      "status": "diagnostic_timeout"
+    },
+    {
+      "backbone": "mlp",
+      "seed": 103,
+      "status": "completed",
+      "relative_l2": 0.9983697533607483,
+      "initial_relative_l2": 1.0227546691894531,
+      "iterations": 50,
+      "wall_seconds": 1.9782816999359056,
+      "final_metrics": {
+        "loss_total": 0.2053898125886917,
+        "loss_base": 0.2053898125886917,
+        "loss_domain": 0.015139120630919933,
+        "loss_boundary": 1.8067434211843647e-05,
+        "loss_initial": 0.19023261964321136,
+        "loss_regularizer": 0.0,
+        "relative_l2_raw": 0.9983697533607483,
+        "relative_l2_log10": -0.0007085848606743351
+      },
+      "function_evaluations": 102
+    },
+    {
+      "backbone": "grand",
+      "seed": 103,
+      "status": "diagnostic_timeout"
+    },
+    {
+      "backbone": "gread",
+      "seed": 103,
+      "status": "diagnostic_timeout"
+    }
+  ],
+  "wall_seconds": 321.03372329997364
+}

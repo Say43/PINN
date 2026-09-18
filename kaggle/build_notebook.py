@@ -22,6 +22,7 @@ def launcher_source(
     v5_lambda_r: float | None = None,
     v5_study_id: str | None = None,
     v5_prereg_sha256: str | None = None,
+    v5_batch_estimate_seconds: float | None = None,
 ) -> str:
     if mode in {"v5_lambda", "v5_matrix"} and hardware != "2xt4":
         raise ValueError("V5 requires Kaggle 2x T4 hardware")
@@ -46,11 +47,14 @@ def launcher_source(
             "--results-dataset", results_dataset,
         ]
     elif mode in {"v5_lambda", "v5_matrix"}:
+        if v5_batch_estimate_seconds is None or v5_batch_estimate_seconds <= 0:
+            raise ValueError("V5 requires a measured batch estimate before launcher generation")
         phase = "lambda" if mode == "v5_lambda" else "matrix"
         command = [
             "python", "-m", "kaggle.v5_runner", "--phase", phase,
             "--config", "configs/reaction_v5.json", "--workers", "2",
             "--wall-budget-seconds", str(cell_wall_budget_seconds),
+            "--batch-estimate-seconds", str(v5_batch_estimate_seconds),
         ]
         if mode == "v5_matrix":
             if v5_lambda_r is None or not v5_study_id or not v5_prereg_sha256:
@@ -67,7 +71,8 @@ def launcher_source(
             "--plan", "__M2_PLAN__",
             "--wall-budget-seconds", str(cell_wall_budget_seconds),
         ]
-    return f'''import os, shutil, subprocess, sys, zipfile
+    verify_payload = mode in {"v5_lambda", "v5_matrix"}
+    return f'''import hashlib, json, os, shutil, subprocess, sys, zipfile
 from pathlib import Path
 
 inputs = Path("/kaggle/input")
@@ -84,6 +89,14 @@ shutil.copytree(mounted, root, dirs_exist_ok=True)
 for archive in mounted.glob("*.zip"):
     with zipfile.ZipFile(archive) as handle:
         handle.extractall(root)
+if {verify_payload!r}:
+    manifest = json.loads((root / "pinn_payload_manifest.json").read_text(encoding="utf-8"))
+    if manifest["source_commit"] != {source_commit or 'unknown'!r}:
+        raise RuntimeError("V5 mounted source commit differs from launcher")
+    for item in manifest["files"]:
+        payload_path = root / item["path"]
+        if hashlib.sha256(payload_path.read_bytes()).hexdigest() != item["sha256"]:
+            raise RuntimeError(f"V5 mounted source hash mismatch: {{item['path']}}")
 {bootstrap}
 os.chdir(root)
 sys.path.insert(0, str(root))
@@ -160,6 +173,7 @@ def main() -> None:
     parser.add_argument("--v5-lambda-r", type=float)
     parser.add_argument("--v5-study-id")
     parser.add_argument("--v5-prereg-sha256")
+    parser.add_argument("--v5-batch-estimate-seconds", type=float)
     parser.add_argument("--output-dir", type=Path, default=Path("kaggle/generated"))
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -184,6 +198,7 @@ def main() -> None:
         tuple(args.calibration_backbones), tuple(args.calibration_precisions),
         args.calibration_repeats, args.budget_stage, args.cell_wall_budget,
         source_commit, args.v5_lambda_r, args.v5_study_id, args.v5_prereg_sha256,
+        args.v5_batch_estimate_seconds,
     ))]
     cells.extend(
         code_cell(runner_cell_source(index + 1, args.runner_cells))

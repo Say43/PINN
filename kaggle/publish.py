@@ -63,7 +63,7 @@ class KagglePublisher:
         shutil.copy2(backup, self.publish_dir / "results.sqlite")
         state = Path(quota_state)
         if state.exists():
-            shutil.copy2(state, self.publish_dir / "quota_state.json")
+            shutil.copy2(state, self.publish_dir / state.name)
         for source in extra_files:
             source_path = Path(source)
             if source_path.exists():

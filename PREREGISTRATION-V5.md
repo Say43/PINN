@@ -67,10 +67,12 @@ und Regularisierung?**
 **H0:** Jeder Architekturvorteil verschwindet unter Kontrolle für Präzision und
 Regularisierung.
 
-**H1 — und hier liegt die Schärfe dieser Gleichung:** Reaction hat **keinen
-Diffusionsterm**. GRANDs gesamte Struktur ist Diffusion; die Architektur kann zu
-dieser Aufgabe nichts beitragen. GREAD hat zusätzlich einen expliziten
-Reaktionsterm und passt strukturell.
+**H1 — mechanistische Vorhersage:** Reaction hat **keinen Diffusionsterm**.
+Deshalb erwarten wir von GRAND keinen spezifischen Strukturvorteil; allgemeines
+Graph-Mixing könnte trotzdem helfen. GREAD besitzt zusätzlich einen
+Reaktionsterm, der jedoch nicht mit dem logistischen PDE-Term identisch ist.
+Ein GREAD-Vorteil wäre ein Hinweis auf den vermuteten Mechanismus, allein aber
+noch kein Beweis dafür.
 
 Vorhergesagt wird daher:
 
@@ -102,6 +104,15 @@ die These widerlegt.
 12 Zellen × 5 Seeds = **60 Läufe**. Die fünf `mlp/fp32/none`-Läufe liegen bereits
 lokal vor; sie werden auf der Zielhardware wiederholt, damit alle ausgewerteten
 Läufe von derselben Hardware stammen.
+
+**Implementierungsnachtrag vor Freeze:** Die Graph-Backbones benutzen für V5
+`fixed_support`. Alle 1900 Kollokationskoordinaten bilden einen eingefrorenen
+Kontextgraphen (symmetrisiertes k-NN, k = 8). Jeder Auswertungspunkt fragt
+denselben Kontext über einen festen geometrischen Radius ab; eine glatte,
+kompakte Distanzgewichtung macht Vorhersage und automatische Ableitungen
+konsistent. Diese Definition ersetzt den bisherigen, vom aktuellen Anfragebatch
+abhängigen Kontext. Ältere Graph-Ergebnisse sind daher nicht direkt mit V5
+vergleichbar. Die MLP-Baseline bleibt unverändert.
 
 ## 5. Wahl von λ_r
 
@@ -142,9 +153,10 @@ werden nicht ausgeschlossen.
 ## 7. Was diese Studie nachweisen kann — und was nicht
 
 Bei fünf Seeds reicht das Wilson-Intervall einer Basisrate von 40 % von rund 12 %
-bis 77 %. **Nachweisbar sind damit nur große Effekte** — etwa ein Sprung von 40 %
-auf 90 % oder ein Absturz auf 0 %. Ein moderater Effekt von 40 % auf 60 % ist von
-Zufall nicht zu trennen und wird auch nicht als Befund berichtet werden.
+bis 77 %. Die Matrix ist deshalb ein Pilot für große Effekte. Selbst 2/5 gegen
+5/5 Erfolge ergeben im zweiseitigen exakten Fisher-Test p ≈ 0.167; ein
+signifikanter Vorteil ist damit nicht zugesichert. Ein moderater Effekt von
+40 % auf 60 % kann mit diesem Design nicht zuverlässig erkannt werden.
 
 Das ist eine Eigenschaft des Budgets, keine der Fragestellung, und es steht hier,
 damit es später nicht als nachträgliche Einschränkung erscheint.
@@ -169,8 +181,11 @@ Divergenz und Kollaps sind Messergebnisse, kein Ausschlussgrund.
 | Reserve (unantastbar) | 1.0 |
 | **Gesamt** | **10.2 von 27** |
 
-Ausführung auf Kaggle, 2× T4, zwei Worker, `log_every = 500`, Persistenz nach jedem
-Einzellauf. Die Matrix passt in eine einzige Session.
+Geplant ist die Ausführung auf Kaggle, 2× T4, zwei Worker, `log_every = 500`,
+Persistenz nach jedem Einzellauf. Die Zeit- und Quotaschätzung stammt von der
+früheren Graph-Implementierung. Vor dem Start der Hauptmatrix muss sie auf
+der Zielhardware für `fixed_support` neu gemessen werden; eine einzelne
+Session ist bislang nicht belegt.
 
 ## 10. Abbruchkriterien
 

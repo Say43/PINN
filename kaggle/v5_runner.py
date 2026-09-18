@@ -59,16 +59,33 @@ class V5QuotaState:
 
 def _runtime(device: str) -> dict:
     import torch
+    from src.train import _runtime_metadata
+    return _runtime_metadata(torch.device(device))
 
-    resolved = torch.device(device)
-    data = {
-        "device": str(resolved),
-        "device_name": torch.cuda.get_device_name(resolved),
-        "device_capability": list(torch.cuda.get_device_capability(resolved)),
-        "torch_version": str(torch.__version__),
-        "cuda_runtime": torch.version.cuda,
-    }
-    return data
+
+def baseline_gate(store: ResultStore, conditions: list[ExperimentConfig]) -> None:
+    """Evaluate all five baseline outcomes before any other study condition."""
+    successes = 0
+    if len(conditions) != 5:
+        raise RuntimeError("baseline gate requires exactly five conditions")
+    for condition in conditions:
+        row = store.connection.execute(
+            "SELECT success FROM runs WHERE trial_key=? AND status IN "
+            "('completed', 'numerical_fail') ORDER BY attempt_no DESC LIMIT 1",
+            (trial_key(condition),),
+        ).fetchone()
+        if row is None:
+            raise RuntimeError("baseline gate requires five terminal results")
+        successes += int(row[0])
+    if abs(successes - 2) > 2:
+        raise RuntimeError(f"baseline gate failed: {successes}/5 versus local 2/5")
+
+
+def condition_batches(conditions, phase, workers):
+    baseline = [c for c in conditions if c.model.backbone == "mlp"
+                and c.train.precision == "fp32" and c.train.regularization == "none"]
+    groups = [conditions] if phase == "lambda" else [baseline, [c for c in conditions if c not in baseline]]
+    return baseline, [group[i:i+workers] for group in groups for i in range(0, len(group), workers)]
 
 
 def _worker(gpu_index: int, incoming, outgoing) -> None:
@@ -160,10 +177,14 @@ def main() -> None:
     parser.add_argument("--prereg-sha256")
     parser.add_argument("--workers", type=int, choices=(1, 2), default=2)
     parser.add_argument("--wall-budget-seconds", type=float, default=2200.0)
+    parser.add_argument("--batch-estimate-seconds", type=float, required=True,
+                        help="Measured upper batch time including publication; not budget divided by runs")
     parser.add_argument(
         "--quota-state", type=Path, default=Path("/kaggle/working/v5_quota_state.json")
     )
     args = parser.parse_args()
+    if not (0 < args.batch_estimate_seconds < args.wall_budget_seconds < 3000):
+        raise ValueError("require 0 < measured batch estimate < cell wall budget < 3000")
 
     handle = os.environ.get("PINN_RESULTS_DATASET")
     if not handle:
@@ -176,9 +197,7 @@ def main() -> None:
     base = ExperimentConfig.from_json(args.config)
     phase, conditions = _condition_queue(args, base)
     quota_state = V5QuotaState.load(args.quota_state)
-    batch_count = math.ceil(len(conditions) / args.workers)
-    phase_limit = getattr(quota_state, f"{phase}_limit_hours")
-    estimated_batch_hours = phase_limit / batch_count
+    estimated_batch_hours = args.batch_estimate_seconds / 3600.0
     process_started = time.perf_counter()
 
     with ResultStore(database, backup) as store:
@@ -186,6 +205,8 @@ def main() -> None:
         pending_conditions = [
             condition for condition in conditions if not store.has_terminal_result(trial_key(condition))
         ]
+        baseline_conditions, batches = condition_batches(conditions, phase, args.workers)
+        batches = [[c for c in batch if c in pending_conditions] for batch in batches]
         if not pending_conditions:
             print(f"V5 {phase}: all conditions already terminal", flush=True)
             return
@@ -199,8 +220,17 @@ def main() -> None:
         ]
         for worker in workers:
             worker.start()
+        checkpoint = process_started
         try:
-            for offset in range(0, len(pending_conditions), args.workers):
+            for batch in batches:
+                if not batch:
+                    continue
+                if phase == "matrix" and batch[0] not in baseline_conditions:
+                    baseline_gate(store, baseline_conditions)
+                now = time.perf_counter()
+                quota_state.record(phase, (now - checkpoint) / 3600.0)
+                checkpoint = now
+                quota_state.save(args.quota_state)
                 elapsed = time.perf_counter() - process_started
                 if elapsed + estimated_batch_hours * 3600.0 > args.wall_budget_seconds:
                     print("V5 wall budget guard stopped before the next batch", flush=True)
@@ -208,8 +238,6 @@ def main() -> None:
                 if not quota_state.can_start_batch(phase, estimated_batch_hours):
                     raise RuntimeError(f"V5 quota guard stopped before the next {phase} batch")
 
-                batch = pending_conditions[offset : offset + args.workers]
-                checkpoint = time.perf_counter()
                 run_ids = set()
                 labels = {}
                 for worker_index, condition in enumerate(batch):
@@ -224,6 +252,8 @@ def main() -> None:
 
                 failures = []
                 while run_ids:
+                    if time.perf_counter() - process_started >= args.wall_budget_seconds:
+                        raise TimeoutError("V5 wall budget expired during a batch; restart unfinished attempts")
                     try:
                         run_id, status, values = outgoing.get(timeout=30.0)
                     except queue.Empty:
@@ -258,6 +288,11 @@ def main() -> None:
                 worker.join(timeout=30.0)
                 if worker.is_alive():
                     worker.terminate()
+                    worker.join(timeout=5.0)
+            quota_state.record(phase, (time.perf_counter() - checkpoint) / 3600.0)
+            quota_state.save(args.quota_state)
+            store.recover_stale_runs()
+            store.backup()
 
 
 if __name__ == "__main__":

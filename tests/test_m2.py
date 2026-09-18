@@ -109,6 +109,7 @@ class M2Tests(unittest.TestCase):
         source = launcher_source(
             "v5_lambda", "owner/pinn-code", "owner/pinn-results", None, "2xt4",
             source_commit="0123456789abcdef",
+            v5_batch_estimate_seconds=500,
         )
         self.assertIn("kaggle.v5_runner", source)
         self.assertIn("'--phase', 'lambda'", source)

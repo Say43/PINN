@@ -10,6 +10,7 @@
   },
   "model": {
     "backbone": "mlp",
+    "graph_context": "fixed_support",
     "mlp_hidden_dim": 128,
     "graph_hidden_dim": 56,
     "num_layers": 4,

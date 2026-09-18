@@ -36,6 +36,8 @@ def validate_v5_base(config: ExperimentConfig) -> None:
         raise ValueError(f"configuration does not match V5 draft: {mismatches}")
     if config.train.max_iters != 2000 or config.train.log_every != 500:
         raise ValueError("V5 requires max_iters=2000 and log_every=500")
+    if config.model.graph_context != "fixed_support":
+        raise ValueError("V5 requires fixed support for consistent graph derivatives")
     if "DRAFT" not in config.persistence.study_id:
         raise ValueError("V5 base must retain an explicit draft study_id")
 

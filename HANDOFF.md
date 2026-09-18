@@ -1,3 +1,17 @@
+# Stand 2026-09-18 — V5 lokal technisch validiert, GPU-Profil offen
+
+Die V5-Hauptmatrix und die λ-Auswahl wurden noch nicht gestartet. Im isolierten
+Checkout wurde der Graph-Kontext für konsistente PINN-Ableitungen korrigiert und
+mit neuen Seeds geprüft; Details und Rohdaten stehen in
+`docs/local-validation-v5.md`. Alle sechs kurzen Graph-CPU-Trainings erreichten
+das Diagnoselimit, daher ist die alte GPU-Budgetschätzung für den neuen Code
+nicht belastbar. Vor einem Kaggle-Start sind ein exaktes Commit-Payload und
+eine Profilierung auf 2× T4 nötig. Die Präregistrierung bleibt ein Entwurf.
+
+Der folgende Stand ist historisch und wird durch diesen Abschnitt ersetzt.
+
+---
+
 # Naechster Schritt (Stand 2026-09-13 — V5-Auswahlphase vorbereitet)
 
 Nichts laeuft. Der V3-Pilot ist beendet und bleibt wegen des gescheiterten M2b-Gates

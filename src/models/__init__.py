@@ -19,6 +19,8 @@ def create_model(config: ModelConfig, bounds: tuple[tuple[float, float], tuple[f
             bounds=bounds,
             diffusion_step=config.diffusion_step,
             reaction=config.backbone == "gread",
+            context_mode=config.graph_context,
+            graph_k=config.graph_k,
         )
     raise ValueError(f"unknown backbone: {config.backbone}")
 
