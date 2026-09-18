@@ -19,6 +19,13 @@ but not yet frozen or run.
 Working documents (preregistration, deviations, budget, findings, handoff) are in
 German; this README is the English report.
 
+**V5 readiness (2026-09-18):** Local CPU checks now validate the revised,
+fixed-support graph derivatives and inference consistency. Short graph training
+runs hit their diagnostic time limit, so the previous GPU cost estimate does
+not establish that the 60-run matrix fits the budget. V5 remains a draft;
+neither lambda selection nor the matrix has run. See
+`docs/local-validation-v5.md` for the measurements and limits.
+
 ## 1. Question and design
 
 **Research question.** Does a PINN with a PDE-structured backbone escape the known
