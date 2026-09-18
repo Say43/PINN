@@ -100,6 +100,11 @@ if {verify_payload!r}:
         if hashlib.sha256(payload_path.read_bytes()).hexdigest() != item["sha256"]:
             raise RuntimeError(f"V5 mounted source hash mismatch: {{item['path']}}")
 {bootstrap}
+if {verify_payload!r}:
+    import torch
+    visible_gpus = [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())]
+    if len(visible_gpus) != 2 or any("T4" not in name for name in visible_gpus):
+        raise RuntimeError(f"V5 requires 2x T4, observed: {{visible_gpus}}")
 os.chdir(root)
 sys.path.insert(0, str(root))
 os.environ["PINN_RESULTS_DATASET"] = "{results_dataset}"

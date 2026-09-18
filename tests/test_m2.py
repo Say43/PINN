@@ -123,6 +123,7 @@ class M2Tests(unittest.TestCase):
         self.assertIn("analysis.profile_gpu", source)
         self.assertIn("pinn_payload_manifest.json", source)
         self.assertIn("abc123", source)
+        self.assertIn("V5 requires 2x T4, observed", source)
 
     def test_v5_matrix_launcher_requires_frozen_inputs(self) -> None:
         with self.assertRaises(ValueError):
