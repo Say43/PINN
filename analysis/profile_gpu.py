@@ -16,10 +16,14 @@ from src.train import train_once
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--iters", type=int, default=25)
+    parser.add_argument(
+        "--cases", nargs="+",
+        help="cases as backbone/precision/regularization; default is the four V5 corners",
+    )
     parser.add_argument("--out", type=Path, default=Path("/kaggle/working/v5_profile.json"))
     args = parser.parse_args()
-    if not 1 <= args.iters <= 50:
-        raise ValueError("profile iterations must be between 1 and 50")
+    if not 1 <= args.iters <= 400:
+        raise ValueError("profile iterations must be between 1 and 400, a fifth of a study run")
     if not torch.cuda.is_available():
         raise RuntimeError("V5 GPU profile requires CUDA")
     torch.set_num_threads(2)
@@ -28,6 +32,10 @@ def main() -> None:
              ("grand", "fp32", "none"),
              ("gread", "fp32", "none"),
              ("gread", "fp64", "double_backprop"))
+    if args.cases:
+        cases = tuple(tuple(case.split("/")) for case in args.cases)
+        if any(len(case) != 3 for case in cases):
+            raise ValueError("each case must be backbone/precision/regularization")
     payload = {"note": "V5_GPU_PROFILE_NOT_STUDY_DATA", "iterations_per_case": args.iters,
                "rows": []}
     args.out.parent.mkdir(parents=True, exist_ok=True)
@@ -51,6 +59,9 @@ def main() -> None:
                 "iterations": result.values["iterations"],
                 "function_evaluations": result.values["function_evaluations"],
                 "relative_l2": result.values["relative_l2"],
+                # The line search decides the cost: a collapsing run spends far more
+                # function evaluations per iteration than a converging one.
+                "history": result.values.get("history", []),
                 "peak_memory_bytes": torch.cuda.max_memory_allocated(),
             }
         except Exception as error:

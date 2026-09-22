@@ -24,6 +24,13 @@ from src.config import ExperimentConfig
 from src.persistence import ResultStore, trial_key
 
 
+# Kaggle ends a GPU session after 12 h.  A runner pass, including its final
+# publication, must finish well before that.  The earlier 3000 s per-cell limit
+# was inferred from the M2b cancellation and could not be reproduced; see
+# DEVIATIONS.md, D-11.
+MAX_WALL_BUDGET_SECONDS = 11.0 * 3600.0
+
+
 @dataclass
 class V5QuotaState:
     total_quota_hours: float = 27.0
@@ -176,15 +183,23 @@ def main() -> None:
     parser.add_argument("--preregistration", type=Path, default=Path("PREREGISTRATION-V5.md"))
     parser.add_argument("--prereg-sha256")
     parser.add_argument("--workers", type=int, choices=(1, 2), default=2)
-    parser.add_argument("--wall-budget-seconds", type=float, default=2200.0)
+    parser.add_argument("--wall-budget-seconds", type=float, default=2200.0,
+                        help="Budget for this runner pass; must stay below the 12 h session limit")
     parser.add_argument("--batch-estimate-seconds", type=float, required=True,
                         help="Measured upper batch time including publication; not budget divided by runs")
+    parser.add_argument("--lambda-limit-hours", type=float,
+                        help="Override the phase quota limit; policy, not accumulated state")
+    parser.add_argument("--matrix-limit-hours", type=float,
+                        help="Override the phase quota limit; policy, not accumulated state")
     parser.add_argument(
         "--quota-state", type=Path, default=Path("/kaggle/working/v5_quota_state.json")
     )
     args = parser.parse_args()
-    if not (0 < args.batch_estimate_seconds < args.wall_budget_seconds < 3000):
-        raise ValueError("require 0 < measured batch estimate < cell wall budget < 3000")
+    if not (0 < args.batch_estimate_seconds < args.wall_budget_seconds <= MAX_WALL_BUDGET_SECONDS):
+        raise ValueError(
+            "require 0 < measured batch estimate < wall budget <= "
+            f"{MAX_WALL_BUDGET_SECONDS:.0f} seconds"
+        )
 
     handle = os.environ.get("PINN_RESULTS_DATASET")
     if not handle:
@@ -197,6 +212,12 @@ def main() -> None:
     base = ExperimentConfig.from_json(args.config)
     phase, conditions = _condition_queue(args, base)
     quota_state = V5QuotaState.load(args.quota_state)
+    # Phase limits are policy and may be revised between sessions; the accumulated
+    # actual hours are state and are never overwritten from the command line.
+    if args.lambda_limit_hours is not None:
+        quota_state.lambda_limit_hours = args.lambda_limit_hours
+    if args.matrix_limit_hours is not None:
+        quota_state.matrix_limit_hours = args.matrix_limit_hours
     estimated_batch_hours = args.batch_estimate_seconds / 3600.0
     process_started = time.perf_counter()
 

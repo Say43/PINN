@@ -1,3 +1,61 @@
+# Stand 2026-09-22 — V5 auf Kaggle profiliert, λ-Auswahl noch nicht gestartet
+
+Pausiert auf Wunsch der Projektleitung. **Auf Kaggle laeuft nichts.**
+
+Erledigt in dieser Session:
+
+- Testsuite lokal gruen (52 Tests).
+- Exaktes V5-Payload aus Commit `187b1fc` (23 Dateien, 97 KB, nur Runtime-Quellen
+  und V5-Entwurf) als neue Version des privaten Code-Datasets
+  `says43/pinn-pde-attention-code` hochgeladen (explizit freigegeben).
+- Profil-Kernel `says43/pinn-pde-attention-v5-profile` auf 2x T4 gelaufen
+  (COMPLETE, 25 Iterationen je Zelle). Rohdaten:
+  `results/v5_gpu_profile_t4_25iters.json` (`NOT_STUDY_DATA`).
+  Kosten je L-BFGS-Funktionsauswertung: MLP/fp32/dbp 0.037 s,
+  GRAND/fp32 0.295 s, GREAD/fp32 0.29 s, GREAD/fp64/dbp 0.42 s.
+  Spitzenspeicher max. 1.55 GB.
+- `analysis/v5_report.py` neu (untracked, noch nicht committet): Auswertung nach
+  Praeregistrierung §6 (Erfolgsquote mit Wilson-KI, Median log10 mit Bootstrap-KI,
+  Baseline-Gate §10), gegen synthetische Zeilen geprueft. Geschrieben vor jeder
+  Sichtung von Matrixdaten.
+- Wochenquota Kaggle am 2026-09-22: 5.4 h von 30 h verbraucht, Reset 2026-09-26.
+- Kaggle-Slug wird aus dem Titel abgeleitet, nicht aus der Metadaten-ID; Push mit
+  `--accelerator NvidiaTeslaT4` (= 2x T4).
+
+Offener Befund, der vor der Matrix entschieden werden muss:
+
+- Lokal gemessen brauchen kollabierte MLP-Laeufe rund 11 Funktionsauswertungen je
+  Iteration (Seed 0: 415 s CPU gegenueber 94 s fuer Seed 4). Bei 2000 Iterationen
+  und 0.3–0.42 s je Auswertung liegen Graph-Laeufe damit zwischen ~25 min
+  (2.5 Auswertungen/Iteration) und ~2.6 h (11/Iteration) **pro Lauf**. Die alte
+  Matrixschaetzung 7.4 h ist nicht haltbar; realistisch sind 12 h bis deutlich
+  mehr, je nach Kollapsanteil. Vor der Matrix ist eine laengere Graph-Kostenprobe
+  noetig (Vorschlag: `analysis.profile_gpu` mit 300 Iterationen fuer
+  `grand/fp32/none` und `gread/fp64/double_backprop`; der Profiler begrenzt derzeit
+  auf 50 Iterationen und muss dafuer erweitert werden).
+- `kaggle/v5_runner.py` und `kaggle/build_notebook.py` erzwingen ein Zellen-
+  Wallbudget < 3000 s. Diese Grenze stammt aus einer einzigen M2b-Beobachtung
+  (`CANCEL_ACKNOWLEDGED`, 0-Byte-Log). Das 0-Byte-Log ist ein bekannter
+  cp1252-Fehler der Kaggle-CLI, und im nanoWM-Projekt lief eine einzelne Zelle
+  3.4 h. Vorschlag: Grenze auf 11 h heben (12-h-Session bleibt die harte Grenze),
+  Quota-Limits je Phase per CLI ueberschreibbar machen, als D-11 dokumentieren.
+  Ein begonnener Patch dafuer wurde **nicht** angewendet; der Working Tree ist bis
+  auf `analysis/v5_report.py` und die Profil-JSON unveraendert.
+- λ-Auswahl (4 MLP/fp32/dbp-Laeufe, Seed 0): geschaetzt bis ~15 min je Lauf auf T4,
+  zwei Batches. Das Phasenlimit 0.3 h in `V5QuotaState` reicht dafuer nicht; 1.0 h
+  vorsehen. Batch-Schaetzung ~1500 s, Wallbudget ~5400 s, ein bis zwei Runner-Zellen.
+
+Naechste Schritte in dieser Reihenfolge: (1) Runner/Builder/Profiler patchen,
+Tests gruen, committen; (2) Payload neu bauen und hochladen; (3) λ-Auswahl und
+Graph-Kostenprobe starten; (4) Matrixbudget aus der Probe festlegen, BUDGET.md
+und PREREGISTRATION-V5.md §9 aktualisieren, V5 einfrieren (Status-Zeile, SHA-256,
+Commit), Payload erneut hochladen; (5) Matrix in Sessions unter 11 h mit Resume;
+(6) `analysis/v5_report.py`, FINDINGS.md, README §3.
+
+Der folgende Stand ist historisch und wird durch diesen Abschnitt ersetzt.
+
+---
+
 # Stand 2026-09-18 — V5 lokal technisch validiert, GPU-Profil offen
 
 Die V5-Hauptmatrix und die λ-Auswahl wurden noch nicht gestartet. Im isolierten

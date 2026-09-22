@@ -5,6 +5,8 @@ import json
 import subprocess
 from pathlib import Path
 
+from kaggle.v5_runner import MAX_WALL_BUDGET_SECONDS as MAX_CELL_WALL_BUDGET_SECONDS
+
 
 def launcher_source(
     mode: str,
@@ -23,6 +25,10 @@ def launcher_source(
     v5_study_id: str | None = None,
     v5_prereg_sha256: str | None = None,
     v5_batch_estimate_seconds: float | None = None,
+    v5_lambda_limit_hours: float | None = None,
+    v5_matrix_limit_hours: float | None = None,
+    v5_profile_iters: int = 25,
+    v5_profile_cases: tuple[str, ...] | None = None,
 ) -> str:
     if mode in {"v5_profile", "v5_lambda", "v5_matrix"} and hardware != "2xt4":
         raise ValueError("V5 requires Kaggle 2x T4 hardware")
@@ -47,7 +53,9 @@ def launcher_source(
             "--results-dataset", results_dataset,
         ]
     elif mode == "v5_profile":
-        command = ["python", "-m", "analysis.profile_gpu", "--iters", "25"]
+        command = ["python", "-m", "analysis.profile_gpu", "--iters", str(v5_profile_iters)]
+        if v5_profile_cases:
+            command.extend(["--cases", *v5_profile_cases])
     elif mode in {"v5_lambda", "v5_matrix"}:
         if v5_batch_estimate_seconds is None or v5_batch_estimate_seconds <= 0:
             raise ValueError("V5 requires a measured batch estimate before launcher generation")
@@ -58,6 +66,10 @@ def launcher_source(
             "--wall-budget-seconds", str(cell_wall_budget_seconds),
             "--batch-estimate-seconds", str(v5_batch_estimate_seconds),
         ]
+        if v5_lambda_limit_hours is not None:
+            command.extend(["--lambda-limit-hours", str(v5_lambda_limit_hours)])
+        if v5_matrix_limit_hours is not None:
+            command.extend(["--matrix-limit-hours", str(v5_matrix_limit_hours)])
         if mode == "v5_matrix":
             if v5_lambda_r is None or not v5_study_id or not v5_prereg_sha256:
                 raise ValueError("v5_matrix requires lambda_r, study_id, and preregistration hash")
@@ -122,11 +134,11 @@ print("launcher ready:", " ".join(command), flush=True)
 def runner_cell_source(index: int, total: int) -> str:
     """One execution cell.
 
-    Kaggle executes committed notebooks through papermill/nbclient, which kills a
-    single cell after 3000 s (observed in the first M2b run, which lost the sixth
-    condition mid-flight). Every cell therefore re-enters the resume-aware runner,
-    which skips terminal attempts and stops on its own wall budget well before the
-    cell timeout can strike.
+    Every cell re-enters the resume-aware runner, which skips terminal attempts and
+    stops on its own wall budget. A 3000 s per-cell timeout was inferred from the
+    first M2b run, whose sixth condition was lost mid-flight; that inference did not
+    hold (DEVIATIONS.md, D-11). The hard limit is the 12 h Kaggle session, so a long
+    pass plus spare resume cells is the default.
     """
     return f'''print("runner pass {index}/{total}", flush=True)
 subprocess.run(command, check=True)
@@ -170,24 +182,34 @@ def main() -> None:
     )
     parser.add_argument(
         "--runner-cells", type=int, default=1,
-        help="number of resume passes; each is its own notebook cell with its own 3000 s timeout",
+        help="number of resume passes; each is its own notebook cell",
     )
     parser.add_argument(
         "--cell-wall-budget", type=float, default=2200.0,
-        help="wall budget per runner cell in seconds; must stay clearly below the 3000 s cell timeout",
+        help="wall budget per runner cell in seconds; at most 11 h, below the 12 h session limit",
     )
     parser.add_argument("--kernel-id", required=True, help="owner/kernel-slug")
     parser.add_argument("--v5-lambda-r", type=float)
     parser.add_argument("--v5-study-id")
     parser.add_argument("--v5-prereg-sha256")
     parser.add_argument("--v5-batch-estimate-seconds", type=float)
+    parser.add_argument("--v5-lambda-limit-hours", type=float)
+    parser.add_argument("--v5-matrix-limit-hours", type=float)
+    parser.add_argument("--v5-profile-iters", type=int, default=25)
+    parser.add_argument(
+        "--v5-profile-cases", nargs="+",
+        help="profile cases as backbone/precision/regularization",
+    )
     parser.add_argument("--output-dir", type=Path, default=Path("kaggle/generated"))
     args = parser.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
     if args.runner_cells < 1:
         raise SystemExit("--runner-cells must be at least 1")
-    if args.cell_wall_budget >= 3000.0:
-        raise SystemExit("--cell-wall-budget must stay below the 3000 s Kaggle cell timeout")
+    if args.cell_wall_budget > MAX_CELL_WALL_BUDGET_SECONDS:
+        raise SystemExit(
+            f"--cell-wall-budget must stay at or below {MAX_CELL_WALL_BUDGET_SECONDS:.0f} s "
+            "(12 h Kaggle session limit)"
+        )
 
     def code_cell(source: str) -> dict:
         return {
@@ -205,7 +227,9 @@ def main() -> None:
         tuple(args.calibration_backbones), tuple(args.calibration_precisions),
         args.calibration_repeats, args.budget_stage, args.cell_wall_budget,
         source_commit, args.v5_lambda_r, args.v5_study_id, args.v5_prereg_sha256,
-        args.v5_batch_estimate_seconds,
+        args.v5_batch_estimate_seconds, args.v5_lambda_limit_hours,
+        args.v5_matrix_limit_hours, args.v5_profile_iters,
+        tuple(args.v5_profile_cases) if args.v5_profile_cases else None,
     ))]
     cells.extend(
         code_cell(runner_cell_source(index + 1, args.runner_cells))

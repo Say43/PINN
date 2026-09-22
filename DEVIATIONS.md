@@ -215,3 +215,41 @@ Abweichungen von der Literatur**, die vor dem Einfrieren bewusst getroffen wurde
 - **Konsequenz:** Externe Datendateien nur noch mit nachgewiesener Lizenz oder als
   im Repository reproduzierbare Erzeugung; Hash und Quelle an genau einer Stelle
   (data/README.md) fuehren, README §7 verweist dorthin.
+
+## D-11 — Zellen-Wallbudget: 3000-s-Grenze durch das 12-h-Sessionlimit ersetzt
+- **Datum:** 2026-09-22
+- **Gilt fuer:** Ausfuehrung (kaggle/v5_runner.py, kaggle/build_notebook.py), nicht
+  fuer eine wissenschaftliche Groesse.
+- **Vorher:** Beide Werkzeuge erzwangen ein Wallbudget unter 3000 s je Notebookzelle.
+- **Befund:** Die 3000-s-Grenze war eine Schlussfolgerung aus genau einer
+  Beobachtung: Der M2b-Kernel endete mit `CANCEL_ACKNOWLEDGED`, das Kernel-Log war
+  0 Byte, und die sechste Zelle brach nach rund 2900 s ab. Das 0-Byte-Log ist
+  inzwischen als Zeichenkodierungsfehler der Kaggle-CLI bekannt und belegt keine
+  Ursache. Im Schwesterprojekt nanoWM lief eine einzelne Notebookzelle 3.4 h ohne
+  Abbruch, was die angenommene Grenze widerlegt. Dokumentiert ist bei Kaggle nur
+  das 12-h-Limit je Session.
+- **Nachher:** `MAX_WALL_BUDGET_SECONDS = 11 h` als einzige Obergrenze; der Runner
+  stoppt weiterhin selbst vor dem naechsten Batch, und mehrere Runner-Zellen bleiben
+  als Resume-Reserve moeglich. Die Persistenz nach jedem Einzellauf ist unveraendert,
+  das Verlustfenster bleibt also hoechstens zwei laufende Einzellaeufe.
+- **Zusaetzlich:** Die Phasenlimits der Quota (`--lambda-limit-hours`,
+  `--matrix-limit-hours`) sind jetzt auf der Kommandozeile setzbar, weil die
+  V5-Schaetzung 7.4 h durch das GPU-Profil widerlegt ist (siehe BUDGET.md). Die
+  aufgelaufenen Ist-Stunden bleiben Zustand und werden nie ueberschrieben; die
+  1.0-h-Reserve bleibt fuer den Guard gesperrt.
+- **Ergebnisse gesichtet:** nein. Zum Zeitpunkt der Aenderung existierte keine
+  einzige V5-Matrixzeile.
+
+## D-12 — Profilierung auf bis zu 400 Iterationen erweitert
+- **Datum:** 2026-09-22
+- **Gilt fuer:** `analysis/profile_gpu.py`, reine Kostenmessung (`NOT_STUDY_DATA`).
+- **Vorher:** hoechstens 50 Iterationen, feste Auswahl von vier Zellen.
+- **Nachher:** bis 400 Iterationen (ein Fuenftel eines Studienlaufs) und waehlbare
+  Zellen; jede Zeile enthaelt zusaetzlich die Loss-Historie.
+- **Begruendung:** Die Kosten eines Laufs haengen an den Funktionsauswertungen je
+  Iteration, und die steigen erst, wenn die Linie-Suche in den Kollaps laeuft. Bei
+  25 Iterationen sind es rund zwei je Iteration, lokal auf CPU bei kollabierten
+  Laeufen bis elf. Eine Budgetplanung aus einem 25-Iterationen-Profil unterschaetzt
+  die Matrix daher systematisch.
+- **Ergebnisse gesichtet:** nein; das Profil schreibt nicht in die Studien-SQLite
+  und meldet nur Kosten.

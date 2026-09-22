@@ -125,6 +125,24 @@ class M2Tests(unittest.TestCase):
         self.assertIn("abc123", source)
         self.assertIn("V5 requires 2x T4, observed", source)
 
+    def test_v5_profile_launcher_carries_iteration_count_and_cases(self) -> None:
+        source = launcher_source(
+            "v5_profile", "owner/pinn-code", "owner/pinn-results", None,
+            "2xt4", source_commit="abc123", v5_profile_iters=300,
+            v5_profile_cases=("grand/fp32/none", "gread/fp64/double_backprop"),
+        )
+        self.assertIn("'--iters', '300'", source)
+        self.assertIn("'--cases', 'grand/fp32/none', 'gread/fp64/double_backprop'", source)
+
+    def test_v5_launcher_passes_revised_phase_limits(self) -> None:
+        source = launcher_source(
+            "v5_lambda", "owner/pinn-code", "owner/pinn-results", None, "2xt4",
+            source_commit="abc123", v5_batch_estimate_seconds=1500,
+            v5_lambda_limit_hours=1.0,
+        )
+        self.assertIn("'--lambda-limit-hours', '1.0'", source)
+        self.assertNotIn("--matrix-limit-hours", source)
+
     def test_v5_matrix_launcher_requires_frozen_inputs(self) -> None:
         with self.assertRaises(ValueError):
             launcher_source(

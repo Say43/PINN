@@ -1,0 +1,54 @@
+{
+  "note": "V5_GPU_PROFILE_NOT_STUDY_DATA",
+  "iterations_per_case": 25,
+  "rows": [
+    {
+      "backbone": "mlp",
+      "precision": "fp32",
+      "regularization": "double_backprop",
+      "status": "completed",
+      "wall_seconds": 8.970649361000028,
+      "trainer_wall_seconds": 1.872734408000042,
+      "iterations": 25,
+      "function_evaluations": 51,
+      "relative_l2": 0.9957264065742493,
+      "peak_memory_bytes": 118105088
+    },
+    {
+      "backbone": "grand",
+      "precision": "fp32",
+      "regularization": "none",
+      "status": "completed",
+      "wall_seconds": 16.73291043300003,
+      "trainer_wall_seconds": 15.356231384000012,
+      "iterations": 25,
+      "function_evaluations": 52,
+      "relative_l2": 1.0050737857818604,
+      "peak_memory_bytes": 690755584
+    },
+    {
+      "backbone": "gread",
+      "precision": "fp32",
+      "regularization": "none",
+      "status": "completed",
+      "wall_seconds": 16.15960385400001,
+      "trainer_wall_seconds": 14.99252606899995,
+      "iterations": 25,
+      "function_evaluations": 52,
+      "relative_l2": 1.0002765655517578,
+      "peak_memory_bytes": 702266368
+    },
+    {
+      "backbone": "gread",
+      "precision": "fp64",
+      "regularization": "double_backprop",
+      "status": "completed",
+      "wall_seconds": 23.012703240000064,
+      "trainer_wall_seconds": 21.658834487000036,
+      "iterations": 25,
+      "function_evaluations": 52,
+      "relative_l2": 1.000212240222254,
+      "peak_memory_bytes": 1552089088
+    }
+  ]
+}

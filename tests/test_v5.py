@@ -5,7 +5,11 @@ from pathlib import Path
 
 from bench.v5 import LAMBDA_CANDIDATES, lambda_selection_conditions, study_conditions, validate_v5_base
 from src.config import ExperimentConfig
-from kaggle.v5_runner import V5QuotaState, _verify_frozen_preregistration
+from kaggle.v5_runner import (
+    MAX_WALL_BUDGET_SECONDS,
+    V5QuotaState,
+    _verify_frozen_preregistration,
+)
 
 
 class V5Tests(unittest.TestCase):
@@ -56,3 +60,15 @@ class V5Tests(unittest.TestCase):
         state = V5QuotaState(actual_matrix_hours=7.3)
         self.assertFalse(state.can_start_batch("matrix", 0.2))
         self.assertTrue(state.can_start_batch("matrix", 0.09))
+
+    def test_raised_phase_limit_still_stops_at_the_reserve(self) -> None:
+        """A revised phase limit is policy; the reserve stays untouchable."""
+        exhausted = V5QuotaState(matrix_limit_hours=24.0, actual_matrix_hours=24.0)
+        self.assertFalse(exhausted.can_start_batch("matrix", 0.5))
+        head_room = V5QuotaState(matrix_limit_hours=20.0, actual_matrix_hours=10.0)
+        self.assertTrue(head_room.can_start_batch("matrix", 1.0))
+        self.assertFalse(head_room.can_start_batch("matrix", 15.0))
+
+    def test_wall_budget_ceiling_is_the_session_limit_not_a_cell_timeout(self) -> None:
+        self.assertAlmostEqual(MAX_WALL_BUDGET_SECONDS, 11.0 * 3600.0)
+        self.assertLess(MAX_WALL_BUDGET_SECONDS, 12.0 * 3600.0)
