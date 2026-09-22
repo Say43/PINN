@@ -1,6 +1,6 @@
 {
   "document": "PREREGISTRATION-V5.md",
-  "freeze_commit": null,
+  "freeze_commit": "f2c89e29d712900b0a4ae5cdc47232fdd8d02e03",
   "frozen_at": "2026-09-22",
   "git_tag": "prereg-v5",
   "lambda_r": 0.0001,
