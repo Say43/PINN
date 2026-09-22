@@ -39,6 +39,22 @@ class FreezeV5Tests(unittest.TestCase):
         )
         self.assertIsNone(lock["freeze_commit"])
 
+    def test_hash_matches_the_bytes_that_reach_kaggle(self) -> None:
+        """The payload carries the Git blob (LF), not the CRLF working copy."""
+        document = self.work / "PREREGISTRATION-V5.md"
+        document.write_text(
+            document.read_text(encoding="utf-8").replace("\n", "\r\n"),
+            encoding="utf-8",
+            newline="",
+        )
+        self.assertIn(b"\r\n", document.read_bytes())
+
+        lock = freeze_v5.freeze(1.0e-4, "reaction_v5_frozen", "2026-09-22")
+        payload = document.read_bytes()
+        self.assertNotIn(b"\r\n", payload)
+        self.assertEqual(lock["sha256"], hashlib.sha256(payload).hexdigest())
+        _verify_frozen_preregistration(document, lock["sha256"])
+
     def test_frozen_document_passes_the_matrix_preflight(self) -> None:
         lock = freeze_v5.freeze(1.0e-4, "reaction_v5_frozen", "2026-09-22")
         _verify_frozen_preregistration(self.work / "PREREGISTRATION-V5.md", lock["sha256"])

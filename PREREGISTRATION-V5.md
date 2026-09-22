@@ -1,11 +1,17 @@
 # Präregistrierung V5 — Reaction an der Kollapskante
 
-**Status: ENTWURF, NICHT eingefroren.** Neue Studie. V3 (eingefroren, Tag `prereg-v3`)
-und V4 (Entwurf, nie ausgeführt) bleiben als Dokumente ihrer jeweiligen Studie
-bestehen.
+**Status: EINGEFROREN.** Eingefroren am **2026-09-22**; ab jetzt keine
+inhaltliche Änderung mehr an diesem Dokument. Jede Abweichung wandert nach
+`DEVIATIONS.md` mit Datum, Begründung und der Angabe, ob die betroffenen
+Ergebnisse zum Zeitpunkt der Änderung bereits gesichtet waren.
 
-V4 wurde nicht gefahren, weil ihre Auswahlregel ein Fehlerband voraussetzte, das bei
-Convection nicht existiert. V5 ersetzt sie auf Basis von Messungen, nicht Annahmen.
+Studien-ID: `reaction_v5_rho525_20260922` · λ_r = 0.0001, ausgewählt nach Abschnitt 5
+vor dem Freeze. SHA-256 und Freeze-Commit: siehe `PREREGISTRATION-V5.lock.json`.
+
+V3 (eingefroren, Tag `prereg-v3`) und V4 (Entwurf, nie ausgeführt) bleiben als
+Dokumente ihrer jeweiligen Studie bestehen. V4 wurde nicht gefahren, weil ihre
+Auswahlregel ein Fehlerband voraussetzte, das bei Convection nicht existiert.
+V5 ersetzt sie auf Basis von Messungen, nicht Annahmen.
 
 ---
 

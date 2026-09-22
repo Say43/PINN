@@ -1,18 +1,47 @@
 # Budget
 
-## Aktueller Rahmen fuer V5 (Entwurf, Stand 2026-09-13)
+## Aktueller Rahmen fuer V5 (Stand 2026-09-22, gemessen)
 
 | Posten | Stunden |
 |---|---|
 | Verfuegbare Gesamtquote | **27.0** |
-| Bereits verbraucht | rund **1.48** |
-| V5-Lambda-Auswahl, 4 Laeufe | **0.3** |
-| V5-Hauptmatrix, 60 Laeufe | **7.4** |
+| Bereits verbraucht (V3) | rund **1.48** |
+| V5-Profil, zwei Kostenproben | **0.18** |
+| V5-Lambda-Auswahl, 4 + 8 Laeufe | **0.4** (Limit 1.5) |
+| V5-Hauptmatrix, 60 Laeufe | **10.0** (Obergrenze, Projektleitung 2026-09-22) |
 | Reserve | **1.0** |
 
 Der V5-Runner rechnet Kaggle-Session-Wallclock, nicht die Summe beider gleichzeitig
 laufenden T4-Prozesse. Lambda-Auswahl und Hauptmatrix haben getrennte Limits. Die
 Hauptmatrix darf erst nach dem Freeze der V5-Praeregistrierung starten.
+
+### Gemessene Kosten auf 2x T4 (2026-09-22)
+
+Zwei Proben, beide `NOT_STUDY_DATA`: 25 Iterationen je vier Zellen
+(`results/v5_gpu_profile_t4_25iters.json`) und 300 Iterationen je zwei Zellen
+(`results/v5_gpu_profile_t4_300iters.json`).
+
+| Zelle | s/Iteration | Auswertungen/Iteration | 2000 Iterationen |
+|---|---|---|---|
+| mlp / fp32 / double_backprop, lambda 1e-5 | 0.055 | 2.15 | 110 s (gemessen) |
+| grand / fp32 / none | 0.546 | 2.07 | rund 1090 s |
+| gread / fp32 / none | 0.600 | 2.08 | rund 1200 s |
+| gread / fp64 / double_backprop, lambda 1e-5 | 0.862 | 2.16 | rund 1725 s |
+
+Hochrechnung der 60 Laeufe: rund 16 GPU-Worker-Stunden, bei zwei Workern also
+etwa 8 h Session-Wallclock. Die frueheren 7.4 h stammten aus der alten
+Graph-Implementierung und sind damit ersetzt.
+
+**Unsicherheit, die im Guard bleibt:** Die Zahl der Funktionsauswertungen je
+Iteration haengt am Verlauf der Linie-Suche. Beim MLP stieg sie mit wachsendem
+lambda_r von 2.15 auf 7.04, die Laufzeit entsprechend von 110 s auf 242 s. Ob sich
+das auf die Graph-Backbones uebertraegt, ist nicht gemessen. Der Quota-Guard bricht
+deshalb vor dem naechsten Batch ab, sobald die Schaetzung die 10.0 h erreicht,
+statt weiterzurechnen. Die Reserve bleibt fuer den Guard gesperrt.
+
+**Wochenquota Kaggle:** 30 h je Woche, Reset 2026-09-26. Am 2026-09-22 vor dem
+V5-Start waren 5.4 h verbraucht; Profil und erste Lambda-Auswahl haben rund 0.3 h
+hinzugefuegt.
 
 Die folgenden Tabellen dokumentieren den historischen V3-Rahmen und dessen
 tatsaechlichen Verbrauch.

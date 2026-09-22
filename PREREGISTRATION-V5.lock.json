@@ -1,0 +1,10 @@
+{
+  "document": "PREREGISTRATION-V5.md",
+  "freeze_commit": null,
+  "frozen_at": "2026-09-22",
+  "git_tag": "prereg-v5",
+  "lambda_r": 0.0001,
+  "schema_version": 1,
+  "sha256": "dccababe4065dca08d5e52bb49d3c6b46953eed517af89df8f2ce8e1debf44bd",
+  "study_id": "reaction_v5_rho525_20260922"
+}

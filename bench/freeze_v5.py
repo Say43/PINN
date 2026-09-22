@@ -25,6 +25,23 @@ LOCK = Path("PREREGISTRATION-V5.lock.json")
 DRAFT_MARKERS = ("Status: ENTWURF", "NICHT eingefroren")
 
 
+def canonical_text(text: str) -> str:
+    """The form Git stores: LF line endings.
+
+    On Windows the working copy carries CRLF, but `kaggle/build_v5_payload.py`
+    ships the blob that `git show` returns. Hashing the working copy would yield a
+    digest the Kaggle preflight cannot reproduce, and the matrix would refuse to
+    start.
+    """
+    return text.replace("\r\n", "\n")
+
+
+def document_digest() -> str:
+    return hashlib.sha256(
+        canonical_text(DOCUMENT.read_text(encoding="utf-8")).encode("utf-8")
+    ).hexdigest()
+
+
 def freeze_header(lambda_r: float, study_id: str, frozen_at: str) -> str:
     return (
         f"# Präregistrierung V5 — Reaction an der Kollapskante\n\n"
@@ -50,16 +67,16 @@ def freeze(lambda_r: float, study_id: str, frozen_at: str) -> dict:
     if not any(marker in text for marker in DRAFT_MARKERS):
         raise SystemExit("document does not carry a draft status; refusing to freeze twice")
 
+    canonical = canonical_text(text)
     marker = "\n---\n"
-    index = text.index(marker)
-    frozen = freeze_header(lambda_r, study_id, frozen_at) + text[index:]
-    DOCUMENT.write_text(frozen, encoding="utf-8")
+    index = canonical.index(marker)
+    frozen = freeze_header(lambda_r, study_id, frozen_at) + canonical[index:]
+    DOCUMENT.write_text(frozen, encoding="utf-8", newline="\n")
 
-    payload = DOCUMENT.read_bytes()
     for draft_marker in DRAFT_MARKERS:
-        if draft_marker in payload.decode("utf-8"):
+        if draft_marker in frozen:
             raise SystemExit(f"draft marker survived the freeze: {draft_marker!r}")
-    digest = hashlib.sha256(payload).hexdigest()
+    digest = document_digest()
     lock = {
         "schema_version": 1,
         "document": DOCUMENT.name,
@@ -75,8 +92,9 @@ def freeze(lambda_r: float, study_id: str, frozen_at: str) -> dict:
 
 
 def record_commit() -> dict:
+    """Record the freeze commit and verify the lock against the committed blob."""
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
-    digest = hashlib.sha256(DOCUMENT.read_bytes()).hexdigest()
+    digest = document_digest()
     if digest != lock["sha256"]:
         raise SystemExit(
             f"document changed after the freeze: locked {lock['sha256']}, found {digest}"
@@ -84,6 +102,14 @@ def record_commit() -> dict:
     commit = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], text=True, encoding="utf-8"
     ).strip()
+    blob_digest = hashlib.sha256(
+        subprocess.check_output(["git", "show", f"{commit}:{DOCUMENT.name}"])
+    ).hexdigest()
+    if blob_digest != digest:
+        raise SystemExit(
+            f"committed blob differs from the locked document: blob {blob_digest}, "
+            f"locked {digest}"
+        )
     lock["freeze_commit"] = commit
     LOCK.write_text(json.dumps(lock, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return lock

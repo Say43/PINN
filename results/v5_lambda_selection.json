@@ -1,0 +1,115 @@
+{
+  "rule": "PREREGISTRATION-V5.md Abschnitt 5 in der Fassung D-13: niedrigster Median des relativen L2 ueber die Seeds [3, 4]",
+  "study_id": "reaction_v5_lambda_selection_seeds34_NOT_STUDY_DATA",
+  "selection_seeds": [
+    3,
+    4
+  ],
+  "selected_lambda_r": 0.0001,
+  "candidates": [
+    {
+      "lambda_r": 1e-05,
+      "median_relative_l2": 0.1054021343588829,
+      "runs": [
+        {
+          "seed": 3,
+          "relative_l2": 0.1264272779226303,
+          "censored": false,
+          "status": "completed",
+          "wall_seconds": 102.149487099,
+          "iterations": 2000,
+          "function_evaluations": 4242,
+          "git_commit": "a4590617e5e3ffee1c01d240a8445ef928a7ba9f"
+        },
+        {
+          "seed": 4,
+          "relative_l2": 0.0843769907951355,
+          "censored": false,
+          "status": "completed",
+          "wall_seconds": 102.69963459899998,
+          "iterations": 2000,
+          "function_evaluations": 4259,
+          "git_commit": "a4590617e5e3ffee1c01d240a8445ef928a7ba9f"
+        }
+      ]
+    },
+    {
+      "lambda_r": 0.0001,
+      "median_relative_l2": 0.08091257885098457,
+      "runs": [
+        {
+          "seed": 3,
+          "relative_l2": 0.09597709774971008,
+          "censored": false,
+          "status": "completed",
+          "wall_seconds": 99.47442189599997,
+          "iterations": 2000,
+          "function_evaluations": 4283,
+          "git_commit": "a4590617e5e3ffee1c01d240a8445ef928a7ba9f"
+        },
+        {
+          "seed": 4,
+          "relative_l2": 0.06584805995225906,
+          "censored": false,
+          "status": "completed",
+          "wall_seconds": 99.04046283999992,
+          "iterations": 2000,
+          "function_evaluations": 4236,
+          "git_commit": "a4590617e5e3ffee1c01d240a8445ef928a7ba9f"
+        }
+      ]
+    },
+    {
+      "lambda_r": 0.001,
+      "median_relative_l2": 0.10362682491540909,
+      "runs": [
+        {
+          "seed": 3,
+          "relative_l2": 0.12984010577201843,
+          "censored": false,
+          "status": "completed",
+          "wall_seconds": 98.33022328599998,
+          "iterations": 2000,
+          "function_evaluations": 4282,
+          "git_commit": "a4590617e5e3ffee1c01d240a8445ef928a7ba9f"
+        },
+        {
+          "seed": 4,
+          "relative_l2": 0.07741354405879974,
+          "censored": false,
+          "status": "completed",
+          "wall_seconds": 98.17066603399996,
+          "iterations": 2000,
+          "function_evaluations": 4258,
+          "git_commit": "a4590617e5e3ffee1c01d240a8445ef928a7ba9f"
+        }
+      ]
+    },
+    {
+      "lambda_r": 0.01,
+      "median_relative_l2": 0.9891127347946167,
+      "runs": [
+        {
+          "seed": 3,
+          "relative_l2": 0.9903389811515808,
+          "censored": false,
+          "status": "completed",
+          "wall_seconds": 204.22843927600002,
+          "iterations": 2000,
+          "function_evaluations": 12094,
+          "git_commit": "a4590617e5e3ffee1c01d240a8445ef928a7ba9f"
+        },
+        {
+          "seed": 4,
+          "relative_l2": 0.9878864884376526,
+          "censored": false,
+          "status": "completed",
+          "wall_seconds": 191.48081639899988,
+          "iterations": 2000,
+          "function_evaluations": 11030,
+          "git_commit": "a4590617e5e3ffee1c01d240a8445ef928a7ba9f"
+        }
+      ]
+    }
+  ]
+}
