@@ -1,56 +1,62 @@
-# Stand 2026-09-22 — V5 auf Kaggle profiliert, λ-Auswahl noch nicht gestartet
+# Stand 2026-09-22 — V5 eingefroren, Hauptmatrix laeuft auf Kaggle
 
-Pausiert auf Wunsch der Projektleitung. **Auf Kaggle laeuft nichts.**
+**Laeuft:** privater Kernel `says43/pinn-pde-attention-v5-matrix` auf 2x T4,
+zwei Worker, 60 Laeufe, Resume nach jedem Einzellauf. Nicht duplizieren und nicht
+neu starten, solange er laeuft; bei Abbruch denselben Kernel erneut pushen, der
+Runner setzt aus `results.sqlite` fort und ueberspringt terminale Versuche.
 
-Erledigt in dieser Session:
+## Eingefroren
 
-- Testsuite lokal gruen (52 Tests).
-- Exaktes V5-Payload aus Commit `187b1fc` (23 Dateien, 97 KB, nur Runtime-Quellen
-  und V5-Entwurf) als neue Version des privaten Code-Datasets
-  `says43/pinn-pde-attention-code` hochgeladen (explizit freigegeben).
-- Profil-Kernel `says43/pinn-pde-attention-v5-profile` auf 2x T4 gelaufen
-  (COMPLETE, 25 Iterationen je Zelle). Rohdaten:
-  `results/v5_gpu_profile_t4_25iters.json` (`NOT_STUDY_DATA`).
-  Kosten je L-BFGS-Funktionsauswertung: MLP/fp32/dbp 0.037 s,
-  GRAND/fp32 0.295 s, GREAD/fp32 0.29 s, GREAD/fp64/dbp 0.42 s.
-  Spitzenspeicher max. 1.55 GB.
-- `analysis/v5_report.py` neu (untracked, noch nicht committet): Auswertung nach
-  Praeregistrierung §6 (Erfolgsquote mit Wilson-KI, Median log10 mit Bootstrap-KI,
-  Baseline-Gate §10), gegen synthetische Zeilen geprueft. Geschrieben vor jeder
-  Sichtung von Matrixdaten.
-- Wochenquota Kaggle am 2026-09-22: 5.4 h von 30 h verbraucht, Reset 2026-09-26.
-- Kaggle-Slug wird aus dem Titel abgeleitet, nicht aus der Metadaten-ID; Push mit
-  `--accelerator NvidiaTeslaT4` (= 2x T4).
+`PREREGISTRATION-V5.md` traegt seit dem 2026-09-22 den Status EINGEFROREN.
+Freeze-Commit `f2c89e29d712900b0a4ae5cdc47232fdd8d02e03`, Tag `prereg-v5`,
+SHA-256 `dccababe4065dca08d5e52bb49d3c6b46953eed517af89df8f2ce8e1debf44bd`,
+Studien-ID `reaction_v5_rho525_20260922`, λ_r = 1e-4. Lock in
+`PREREGISTRATION-V5.lock.json`. Gehasht wird die kanonische LF-Fassung, also genau
+die Bytes, die per `git show` in das Kaggle-Payload gehen; ein Hash ueber die
+CRLF-Arbeitskopie haette den Vorflug scheitern lassen.
 
-Offener Befund, der vor der Matrix entschieden werden muss:
+## Was gemessen wurde, bevor die Matrix startete
 
-- Lokal gemessen brauchen kollabierte MLP-Laeufe rund 11 Funktionsauswertungen je
-  Iteration (Seed 0: 415 s CPU gegenueber 94 s fuer Seed 4). Bei 2000 Iterationen
-  und 0.3–0.42 s je Auswertung liegen Graph-Laeufe damit zwischen ~25 min
-  (2.5 Auswertungen/Iteration) und ~2.6 h (11/Iteration) **pro Lauf**. Die alte
-  Matrixschaetzung 7.4 h ist nicht haltbar; realistisch sind 12 h bis deutlich
-  mehr, je nach Kollapsanteil. Vor der Matrix ist eine laengere Graph-Kostenprobe
-  noetig (Vorschlag: `analysis.profile_gpu` mit 300 Iterationen fuer
-  `grand/fp32/none` und `gread/fp64/double_backprop`; der Profiler begrenzt derzeit
-  auf 50 Iterationen und muss dafuer erweitert werden).
-- `kaggle/v5_runner.py` und `kaggle/build_notebook.py` erzwingen ein Zellen-
-  Wallbudget < 3000 s. Diese Grenze stammt aus einer einzigen M2b-Beobachtung
-  (`CANCEL_ACKNOWLEDGED`, 0-Byte-Log). Das 0-Byte-Log ist ein bekannter
-  cp1252-Fehler der Kaggle-CLI, und im nanoWM-Projekt lief eine einzelne Zelle
-  3.4 h. Vorschlag: Grenze auf 11 h heben (12-h-Session bleibt die harte Grenze),
-  Quota-Limits je Phase per CLI ueberschreibbar machen, als D-11 dokumentieren.
-  Ein begonnener Patch dafuer wurde **nicht** angewendet; der Working Tree ist bis
-  auf `analysis/v5_report.py` und die Profil-JSON unveraendert.
-- λ-Auswahl (4 MLP/fp32/dbp-Laeufe, Seed 0): geschaetzt bis ~15 min je Lauf auf T4,
-  zwei Batches. Das Phasenlimit 0.3 h in `V5QuotaState` reicht dafuer nicht; 1.0 h
-  vorsehen. Batch-Schaetzung ~1500 s, Wallbudget ~5400 s, ein bis zwei Runner-Zellen.
+- **GPU-Profil auf 2x T4** (`results/v5_gpu_profile_t4_25iters.json`,
+  `results/v5_gpu_profile_t4_300iters.json`, beide `NOT_STUDY_DATA`):
+  GRAND/fp32 0.546 s und GREAD/fp64 mit Double Backprop 0.862 s je Iteration, rund
+  2.1 Funktionsauswertungen je Iteration. Hochrechnung 60 Laeufe: rund 16
+  Worker-Stunden, bei zwei Workern etwa 8 h Session-Wallclock. Die alte Schaetzung
+  von 7.4 h ist damit ersetzt; freigegeben sind 10.0 h.
+- **Lambda-Auswahl, erster Versuch auf Seed 0:** alle vier Kandidaten kollabiert
+  (0.9910 bis 0.9993). Ursache ist der Seed, nicht die Regularisierung.
+- **Lambda-Auswahl, revidierte Fassung auf den Seeds 3 und 4** (D-13, Entscheidung
+  der Projektleitung eingeholt): Median des relativen L2 1e-5 auf 0.1054, **1e-4 auf
+  0.0809**, 1e-3 auf 0.1036, 1e-2 auf 0.9891. Gewaehlt ist 1e-4, der einzige
+  Kandidat unter der Schwelle 0.10 auf beiden Seeds. Auf Seed 0 haette die alte
+  Regel 1e-2 gewaehlt, also genau den Wert, der die Loesung zerstoert.
+  Artefakt: `results/v5_lambda_selection.json`.
+- Quota: 0.27 h fuer beide Lambda-Phasen, 0.18 h fuer die Profile. Kaggle-Wochenquota
+  am 2026-09-22 vor dem Matrixstart rund 5.9 von 30 h, Reset 2026-09-26.
 
-Naechste Schritte in dieser Reihenfolge: (1) Runner/Builder/Profiler patchen,
-Tests gruen, committen; (2) Payload neu bauen und hochladen; (3) λ-Auswahl und
-Graph-Kostenprobe starten; (4) Matrixbudget aus der Probe festlegen, BUDGET.md
-und PREREGISTRATION-V5.md §9 aktualisieren, V5 einfrieren (Status-Zeile, SHA-256,
-Commit), Payload erneut hochladen; (5) Matrix in Sessions unter 11 h mit Resume;
-(6) `analysis/v5_report.py`, FINDINGS.md, README §3.
+## Werkzeuge, die es vorher nicht gab
+
+- `analysis/v5_report.py` — Auswertung nach Abschnitt 6: Erfolgsquote mit
+  Wilson-Intervall, Median log10 mit Bootstrap-Intervall, Baseline-Gate aus
+  Abschnitt 10. Geschrieben vor jeder Sichtung von Matrixdaten.
+- `analysis/v5_lambda_pick.py` — wendet die Auswahlregel mechanisch an.
+- `bench/freeze_v5.py` — Freeze und Lock-Datei, mit Test gegen die CRLF-Falle.
+- Das Zellenlimit von 3000 s ist durch das 12-h-Sessionlimit ersetzt (D-11); die
+  Profilierung reicht bis 400 Iterationen mit waehlbaren Zellen (D-12).
+
+## Naechste Schritte nach dem Kernel
+
+1. Status pruefen, Output holen, `results.sqlite` uebernehmen. Erst bei 60/60
+   terminalen Laeufen gemeinsam auswerten; Fehler und Timeouts zaehlen als
+   Ergebnisse.
+2. `python -m analysis.v5_report --study-id reaction_v5_rho525_20260922
+   --json results/v5_report.json`. Das Baseline-Gate aus Abschnitt 10 zuerst lesen:
+   weicht `mlp/fp32/none` um mehr als zwei von fuenf Seeds von 2/5 ab, anhalten und
+   die Ursache klaeren, bevor interpretiert wird.
+3. FINDINGS.md und README Abschnitt 3 schreiben: Nullbefund zuerst, beide
+   ko-primaeren Metriken nebeneinander, Widersprueche zwischen ihnen berichten statt
+   aufloesen. Die Grenzen aus Abschnitt 7 uebernehmen, nicht abschwaechen.
+4. BUDGET.md mit dem Ist-Verbrauch fortschreiben.
 
 Der folgende Stand ist historisch und wird durch diesen Abschnitt ersetzt.
 
