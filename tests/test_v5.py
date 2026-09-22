@@ -3,7 +3,13 @@ import tempfile
 from dataclasses import replace
 from pathlib import Path
 
-from bench.v5 import LAMBDA_CANDIDATES, lambda_selection_conditions, study_conditions, validate_v5_base
+from bench.v5 import (
+    LAMBDA_CANDIDATES,
+    LAMBDA_SELECTION_SEEDS,
+    lambda_selection_conditions,
+    study_conditions,
+    validate_v5_base,
+)
 from src.config import ExperimentConfig
 from kaggle.v5_runner import (
     MAX_WALL_BUDGET_SECONDS,
@@ -19,12 +25,25 @@ class V5Tests(unittest.TestCase):
 
     def test_lambda_selection_is_exactly_the_preregistered_baseline_grid(self) -> None:
         conditions = list(lambda_selection_conditions(self.base))
-        self.assertEqual([item.train.lambda_r for item in conditions], list(LAMBDA_CANDIDATES))
+        self.assertEqual(
+            [(item.train.lambda_r, item.train.seed) for item in conditions],
+            [(value, seed) for value in LAMBDA_CANDIDATES for seed in LAMBDA_SELECTION_SEEDS],
+        )
         self.assertTrue(all(item.model.backbone == "mlp" for item in conditions))
         self.assertTrue(all(item.train.precision == "fp32" for item in conditions))
         self.assertTrue(all(item.train.regularization == "double_backprop" for item in conditions))
-        self.assertTrue(all(item.train.seed == 0 for item in conditions))
         self.assertTrue(all("NOT_STUDY_DATA" in item.persistence.study_id for item in conditions))
+
+    def test_lambda_selection_avoids_seeds_whose_baseline_collapses(self) -> None:
+        """D-13: selecting on a seed that fails anyway decides on noise."""
+        self.assertEqual(LAMBDA_SELECTION_SEEDS, (3, 4))
+        self.assertNotIn(0, LAMBDA_SELECTION_SEEDS)
+        conditions = list(lambda_selection_conditions(self.base))
+        self.assertEqual(len(conditions), len(LAMBDA_CANDIDATES) * len(LAMBDA_SELECTION_SEEDS))
+        self.assertTrue(
+            all("seeds34" in item.persistence.study_id for item in conditions),
+            "the revised selection must not reuse the seed-0 study id",
+        )
 
     def test_study_matrix_has_60_unique_conditions(self) -> None:
         conditions = list(

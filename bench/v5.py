@@ -13,6 +13,10 @@ from src.config import ExperimentConfig
 
 
 LAMBDA_CANDIDATES = (1.0e-5, 1.0e-4, 1.0e-3, 1.0e-2)
+# Seed 0 collapses in the unregularised baseline, so a selection on it cannot
+# separate the candidates.  The revised rule uses the two seeds whose baseline
+# succeeds (DEVIATIONS.md, D-13).
+LAMBDA_SELECTION_SEEDS = (3, 4)
 BACKBONES = ("mlp", "grand", "gread")
 PRECISIONS = ("fp32", "fp64")
 REGULARIZATIONS = ("none", "double_backprop")
@@ -43,24 +47,25 @@ def validate_v5_base(config: ExperimentConfig) -> None:
 
 
 def lambda_selection_conditions(base: ExperimentConfig) -> Iterator[ExperimentConfig]:
-    """Four MLP/FP32/seed-0 configurations from V5 section 5."""
+    """The MLP/FP32 double-backprop grid from V5 section 5, on the baseline-success seeds."""
     validate_v5_base(base)
     for lambda_r in LAMBDA_CANDIDATES:
-        yield replace(
-            base,
-            model=replace(base.model, backbone="mlp"),
-            train=replace(
-                base.train,
-                precision="fp32",
-                regularization="double_backprop",
-                seed=0,
-                lambda_r=lambda_r,
-            ),
-            persistence=replace(
-                base.persistence,
-                study_id="reaction_v5_lambda_selection_NOT_STUDY_DATA",
-            ),
-        )
+        for seed in LAMBDA_SELECTION_SEEDS:
+            yield replace(
+                base,
+                model=replace(base.model, backbone="mlp"),
+                train=replace(
+                    base.train,
+                    precision="fp32",
+                    regularization="double_backprop",
+                    seed=seed,
+                    lambda_r=lambda_r,
+                ),
+                persistence=replace(
+                    base.persistence,
+                    study_id="reaction_v5_lambda_selection_seeds34_NOT_STUDY_DATA",
+                ),
+            )
 
 
 def study_conditions(

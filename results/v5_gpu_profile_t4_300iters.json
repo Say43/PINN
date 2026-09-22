@@ -1,0 +1,82 @@
+{
+  "note": "V5_GPU_PROFILE_NOT_STUDY_DATA",
+  "iterations_per_case": 300,
+  "rows": [
+    {
+      "backbone": "grand",
+      "precision": "fp32",
+      "regularization": "none",
+      "status": "completed",
+      "wall_seconds": 171.523688883,
+      "trainer_wall_seconds": 163.85522210399998,
+      "iterations": 300,
+      "function_evaluations": 621,
+      "relative_l2": 0.9353711009025574,
+      "history": [
+        {
+          "iteration": 1,
+          "function_evaluations": 2,
+          "wall_seconds": 1.625566450000008,
+          "relative_l2": 1.0342179536819458,
+          "loss_total": 0.520530104637146,
+          "loss_base": 0.520530104637146,
+          "loss_domain": 0.37715521454811096,
+          "loss_boundary": 6.313778430921957e-05,
+          "loss_initial": 0.1433117687702179,
+          "loss_regularizer": 0.0
+        },
+        {
+          "iteration": 300,
+          "function_evaluations": 621,
+          "wall_seconds": 162.90719713000001,
+          "relative_l2": 0.9353711009025574,
+          "loss_total": 0.19515380263328552,
+          "loss_base": 0.19515380263328552,
+          "loss_domain": 0.02437579073011875,
+          "loss_boundary": 7.879410986788571e-06,
+          "loss_initial": 0.17077013850212097,
+          "loss_regularizer": 0.0
+        }
+      ],
+      "peak_memory_bytes": 722452992
+    },
+    {
+      "backbone": "gread",
+      "precision": "fp64",
+      "regularization": "double_backprop",
+      "status": "completed",
+      "wall_seconds": 259.88613739699997,
+      "trainer_wall_seconds": 258.55272875400004,
+      "iterations": 300,
+      "function_evaluations": 649,
+      "relative_l2": 0.43625701532253225,
+      "history": [
+        {
+          "iteration": 1,
+          "function_evaluations": 2,
+          "wall_seconds": 0.8469703170000003,
+          "relative_l2": 1.0289299281943822,
+          "loss_total": 0.6587505471384604,
+          "loss_base": 0.65872716661451,
+          "loss_domain": 0.5245987983074779,
+          "loss_boundary": 0.000144745183527633,
+          "loss_initial": 0.1339836231235045,
+          "loss_regularizer": 4.6761047900767005
+        },
+        {
+          "iteration": 300,
+          "function_evaluations": 649,
+          "wall_seconds": 257.576208378,
+          "relative_l2": 0.43625701532253225,
+          "loss_total": 0.07812832013403548,
+          "loss_base": 0.07808876953551158,
+          "loss_domain": 0.04307832483293501,
+          "loss_boundary": 0.001341088189374795,
+          "loss_initial": 0.03366935651320177,
+          "loss_regularizer": 7.910119704779629
+        }
+      ],
+      "peak_memory_bytes": 1615405568
+    }
+  ]
+}

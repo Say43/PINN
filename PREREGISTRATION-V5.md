@@ -116,9 +116,22 @@ vergleichbar. Die MLP-Baseline bleibt unverändert.
 
 ## 5. Wahl von λ_r
 
-Wie in V4: MLP-Baseline, fp32, `double_backprop`, Seed 0, λ_r ∈ {1e-5, 1e-4, 1e-3,
-1e-2}; der Wert mit dem niedrigsten relativen L2 gilt danach unverändert für alle
-Bedingungen. Kein Graph-Backbone, kein architekturspezifisches Tuning.
+MLP-Baseline, fp32, `double_backprop`, λ_r ∈ {1e-5, 1e-4, 1e-3, 1e-2}, **Seeds 3
+und 4**; der Kandidat mit dem niedrigsten Median des relativen L2 über diese beiden
+Seeds gilt danach unverändert für alle Bedingungen. Kein Graph-Backbone, kein
+architekturspezifisches Tuning.
+
+**Warum nicht Seed 0.** Die erste Fassung dieses Abschnitts wählte auf Seed 0. Die
+vier Läufe wurden am 2026-09-22 auf 2× T4 ausgeführt und kollabierten alle
+(relativer L2 0.9910 bis 0.9993). Das ist die Eigenschaft des Seeds, nicht der
+Regularisierung: Seed 0 gehört zu den drei von fünf Seeds, auf denen bereits die
+unregularisierte Baseline scheitert (Abschnitt 1). Eine Auswahl unter vier
+kollabierten Läufen entscheidet auf Rauschen. Die Seeds 3 und 4 sind genau die, auf
+denen die Baseline gelingt; dort kann die Auswahl zeigen, ob ein λ_r den Erfolg
+erhält oder zerstört. Die Änderung erfolgte vor dem Freeze und ausschließlich auf
+MLP-Daten; kein Graph-Backbone wurde zu diesem Zeitpunkt gerechnet. Dokumentiert als
+D-13. Die verworfenen Seed-0-Läufe bleiben als `NOT_STUDY_DATA` in der Datenbank und
+werden in FINDINGS.md berichtet.
 
 Begründung der Kandidatenliste: λ_r = 1.0 trieb Double Backprop bei Convection
 nachweislich in die Trivialfalle (Anfangsterm stagniert bei 0.43, Optimierer friert
@@ -176,16 +189,25 @@ Divergenz und Kollaps sind Messergebnisse, kein Ausschlussgrund.
 | Posten | Stunden |
 |---|---|
 | Bereits verbraucht (V3) | 1.5 |
-| λ_r-Auswahl (4 Baseline-Läufe) | 0.3 |
-| Hauptmatrix, 60 Läufe | 7.4 |
+| λ_r-Auswahl (4 + 8 Baseline-Läufe) | 0.4 |
+| Hauptmatrix, 60 Läufe | 10.0 |
 | Reserve (unantastbar) | 1.0 |
-| **Gesamt** | **10.2 von 27** |
+| **Gesamt** | **12.9 von 27** |
 
-Geplant ist die Ausführung auf Kaggle, 2× T4, zwei Worker, `log_every = 500`,
-Persistenz nach jedem Einzellauf. Die Zeit- und Quotaschätzung stammt von der
-früheren Graph-Implementierung. Vor dem Start der Hauptmatrix muss sie auf
-der Zielhardware für `fixed_support` neu gemessen werden; eine einzelne
-Session ist bislang nicht belegt.
+Ausführung auf Kaggle, 2× T4, zwei Worker, `log_every = 500`, Persistenz nach jedem
+Einzellauf.
+
+Die Matrixzahl ist am 2026-09-22 auf der Zielhardware für `fixed_support` gemessen
+worden und ersetzt die frühere Schätzung von 7.4 h, die aus der alten
+Graph-Implementierung stammte. Gemessen wurden 300 Iterationen je Zelle:
+GRAND/fp32 0.546 s und GREAD/fp64 mit Double Backprop 0.862 s je Iteration, bei
+rund 2.1 Funktionsauswertungen je Iteration (`results/v5_gpu_profile_t4_300iters.json`).
+Hochgerechnet auf 2000 Iterationen ergibt das rund 16 GPU-Worker-Stunden, bei zwei
+Workern also etwa 8 h Session-Wallclock; 10.0 h sind die dafür freigegebene
+Obergrenze. Die Hochrechnung setzt voraus, dass die Funktionsauswertungen je
+Iteration nicht stark steigen. Beim MLP stiegen sie mit wachsendem λ_r von 2.1 auf
+7.0; ob sich das auf die Graph-Backbones überträgt, ist nicht gemessen. Der
+Quota-Guard bricht daher vor dem Erreichen der 10.0 h ab, statt weiterzurechnen.
 
 ## 10. Abbruchkriterien
 

@@ -253,3 +253,32 @@ Abweichungen von der Literatur**, die vor dem Einfrieren bewusst getroffen wurde
   die Matrix daher systematisch.
 - **Ergebnisse gesichtet:** nein; das Profil schreibt nicht in die Studien-SQLite
   und meldet nur Kosten.
+
+## D-13 — λ_r-Auswahl von Seed 0 auf die Seeds 3 und 4 verlegt
+- **Datum:** 2026-09-22
+- **Gilt fuer:** PREREGISTRATION-V5 Abschnitt 5, **vor** dem Freeze.
+- **Vorher:** vier MLP/fp32/double_backprop-Laeufe auf Seed 0; gewaehlt wird der
+  niedrigste relative L2.
+- **Befund:** Die vier Laeufe wurden auf 2x T4 ausgefuehrt und kollabierten alle:
+  λ_r = 1e-5 auf 0.9973, 1e-4 auf 0.9993, 1e-3 auf 0.9982, 1e-2 auf 0.9910. Die
+  Regel haette damit 1e-2 gewaehlt, obwohl der Abstand zwischen 0.991 und 0.999
+  innerhalb des Kollapsmodus liegt und keine Aussage ueber die Regularisierung
+  traegt. Ursache ist die Wahl des Seeds: Seed 0 ist einer der drei Seeds, auf denen
+  schon die unregularisierte Baseline scheitert (Praeregistrierung Abschnitt 1).
+- **Nachher:** dieselbe Kandidatenliste und dieselbe Architektur, aber auf den Seeds
+  3 und 4, auf denen die Baseline gelingt (0.083 und 0.070); gewaehlt wird der
+  niedrigste Median des relativen L2 ueber beide Seeds. Bei exakter Gleichheit
+  entscheidet das kleinere λ_r.
+- **Ergebnisse gesichtet:** ja, aber ausschliesslich MLP-Laeufe. Zum Zeitpunkt der
+  Aenderung war kein Graph-Backbone am V5-Arbeitspunkt gerechnet worden, die
+  Aenderung kann den Architekturvergleich also nicht beguenstigen. Dieselbe
+  Begruendung traegt bereits die Wahl des Arbeitspunktes in Abschnitt 1.
+- **Kostenfolge, nicht Auswahlgrund:** Beim MLP stieg die Zahl der
+  Funktionsauswertungen mit λ_r von 4296 auf 14088, also auf das 3.3-Fache. Ein
+  grosses λ_r verteuert die 30 Double-Backprop-Laeufe entsprechend. Das ist eine
+  Folge, kein Kriterium; die Auswahl entscheidet allein der relative L2.
+- **Entscheidung der Projektleitung:** ausdruecklich eingeholt am 2026-09-22, samt
+  der Alternative, die alte Regel mechanisch anzuwenden.
+- **Verworfene Laeufe:** Die vier Seed-0-Laeufe bleiben unter
+  `reaction_v5_lambda_selection_NOT_STUDY_DATA` in der Datenbank und werden in
+  FINDINGS.md berichtet; sie werden nicht geloescht.
