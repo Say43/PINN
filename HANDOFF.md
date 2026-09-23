@@ -14,6 +14,10 @@ Ergebnis (Details: FINDINGS.md, README Abschnitt 3, `results/v5_report.json`):
   gegen GRAND ist bei n = 20 nicht aufloesbar.
 - Praezision ohne Effekt (21 gegen 20 von 30), Double Backprop mit Effekt
   (24 gegen 17 von 30, Nebenbefund).
+- Explorativ (`results/v5_failure_modes.json`): 16 der 19 Fehlschlaege erfuellen
+  Residuum und Anfangsbedingung bis Loss 1e-5 und sind trotzdem falsch; nur 3 (alle
+  MLP) sind Optimierungskollaps. Die Graph-Backbones reduzieren genau die erste Art
+  (MLP 9, GRAND 5, GREAD 2 von je 20).
 - Grenze mit dem groessten Gewicht: gleiche Iterationen und Parameter, nicht
   gleicher Rechenaufwand; ein Graph-Lauf kostet das 10- bis 16-Fache.
 

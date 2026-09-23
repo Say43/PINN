@@ -77,6 +77,48 @@ Kanal abgeschaltet, und es bleibt kein Effekt uebrig. Double Backprop hebt die
 Quote in jedem Backbone (mlp 3→5, grand 6→9, gread 8→10 von je 10). Das war keine
 praeregistrierte Hypothese und wird als Nebenbefund berichtet.
 
+### Explorativ: Welche Versagensart die Graph-Backbones vermeiden
+
+Nicht praeregistriert, nach der Sichtung der Matrixdaten ausgewertet
+(`analysis/v5_failure_modes.py`, `results/v5_failure_modes.json`). Die 19
+gescheiterten Laeufe zerfallen nach ihrem finalen Trainings-Loss in zwei klar
+getrennte Gruppen:
+
+| Backbone | Erfolg | Optimierer friert ein | Residuum erfuellt, Loesung falsch |
+|---|---|---|---|
+| mlp | 8 | 3 | 9 |
+| grand | 15 | 0 | 5 |
+| gread | 18 | 0 | 2 |
+
+- **Optimierer friert ein** (3 Laeufe, alle MLP, alle FP32): Der Loss bleibt ab
+  Iteration 500 bei 0.1994 bis 0.1996, die Anfangsbedingung wird nie gelernt
+  (Anfangsterm 0.18). Die Linie-Suche verbraucht dabei rund 4.6 Auswertungen je
+  Iteration statt gut 2. Das ist der Optimierungskollaps, wie er bei ρ = 7
+  beobachtet wurde.
+- **Residuum erfuellt, Loesung falsch** (16 Laeufe): Der Loss faellt auf 2.8e-6 bis
+  6.5e-5, Residuum, Rand- und Anfangsbedingung sind an den Kollokationspunkten
+  erfuellt, und der relative L2 auf dem 101×101-Auswertungsgitter liegt trotzdem
+  meist bei 0.98 bis 1.00. Der Trainings-Loss unterscheidet diese Laeufe nicht von
+  den erfolgreichen.
+
+Zwischen den beiden Gruppen liegen drei Groessenordnungen im Loss; jede Schwelle
+dazwischen ergibt dieselbe Einteilung.
+
+**Was daraus folgt.** Die frueher berichtete Beschreibung der Kollapskante als
+Optimierungskollaps trifft am Arbeitspunkt ρ = 5.25 nur auf drei der 19
+Fehlschlaege zu. Die vorherrschende Versagensart ist eine Loesung, die die
+Gleichung an den Kollokationspunkten erfuellt und dazwischen falsch ist. Genau
+diese Versagensart reduzieren die Graph-Backbones: 9 von 20 beim MLP, 5 bei GRAND,
+2 bei GREAD. Das passt zu der Deutung, dass der eingefrorene k-NN-Kontext ueber
+alle Kollokationspunkte als Kopplung zwischen benachbarten Punkten wirkt und
+Loesungen erschwert, die nur punktweise stimmen. Belegt ist diese Deutung nicht;
+sie waere mit einer Ablation zu pruefen, die den Graph-Kontext ohne Diffusions- und
+Reaktionsterm behaelt.
+
+Eine praktische Folge fuer PINNs allgemein: Ein kleiner Trainings-Loss ist an
+diesem Arbeitspunkt kein Hinweis auf eine richtige Loesung. 16 von 19
+Fehlschlaegen waeren allein am Loss nicht zu erkennen gewesen.
+
 ### Wie die Laeufe ausgehen
 
 Der Ausgang ist bimodal wie erwartet. Erfolge liegen zwischen 0.051 und 0.096,
