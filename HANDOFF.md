@@ -1,62 +1,28 @@
-# Stand 2026-09-22 — V5 eingefroren, Hauptmatrix laeuft auf Kaggle
+# Stand 2026-09-23 — V5 abgeschlossen und ausgewertet
 
-**Laeuft:** privater Kernel `says43/pinn-pde-attention-v5-matrix` auf 2x T4,
-zwei Worker, 60 Laeufe, Resume nach jedem Einzellauf. Nicht duplizieren und nicht
-neu starten, solange er laeuft; bei Abbruch denselben Kernel erneut pushen, der
-Runner setzt aus `results.sqlite` fort und ueberspringt terminale Versuche.
+**Nichts laeuft.** Die V5-Matrix ist vollstaendig: 60 von 60 Laeufen terminal, kein
+Infrastrukturfehler, alle auf Tesla T4 aus Commit `3dbf646`, dauerhaft im privaten
+Dataset `says43/pinn-pde-attention-results` und lokal in `results/results.sqlite`.
 
-## Eingefroren
+Ergebnis (Details: FINDINGS.md, README Abschnitt 3, `results/v5_report.json`):
 
-`PREREGISTRATION-V5.md` traegt seit dem 2026-09-22 den Status EINGEFROREN.
-Freeze-Commit `f2c89e29d712900b0a4ae5cdc47232fdd8d02e03`, Tag `prereg-v5`,
-SHA-256 `dccababe4065dca08d5e52bb49d3c6b46953eed517af89df8f2ce8e1debf44bd`,
-Studien-ID `reaction_v5_rho525_20260922`, λ_r = 1e-4. Lock in
-`PREREGISTRATION-V5.lock.json`. Gehasht wird die kanonische LF-Fassung, also genau
-die Bytes, die per `git show` in das Kaggle-Payload gehen; ein Hash ueber die
-CRLF-Arbeitskopie haette den Vorflug scheitern lassen.
+- Baseline-Gate bestanden, `mlp/fp32/none` 2/5 wie lokal.
+- Erfolgsquote MLP 8/20, GRAND 15/20, GREAD 18/20. Beide Graph-Backbones schlagen
+  das MLP in allen vier Strata; der Vorteil ueberlebt die Kontrolle fuer Praezision
+  und Regularisierung.
+- Die mechanistische Vorhersage (GRAND ohne Vorteil) ist nicht bestaetigt; GREAD
+  gegen GRAND ist bei n = 20 nicht aufloesbar.
+- Praezision ohne Effekt (21 gegen 20 von 30), Double Backprop mit Effekt
+  (24 gegen 17 von 30, Nebenbefund).
+- Grenze mit dem groessten Gewicht: gleiche Iterationen und Parameter, nicht
+  gleicher Rechenaufwand; ein Graph-Lauf kostet das 10- bis 16-Fache.
 
-## Was gemessen wurde, bevor die Matrix startete
+Kosten: V5 8.74 GPU-h, Projekt gesamt 10.2 von 27 h. Die Reserve ist unberuehrt.
 
-- **GPU-Profil auf 2x T4** (`results/v5_gpu_profile_t4_25iters.json`,
-  `results/v5_gpu_profile_t4_300iters.json`, beide `NOT_STUDY_DATA`):
-  GRAND/fp32 0.546 s und GREAD/fp64 mit Double Backprop 0.862 s je Iteration, rund
-  2.1 Funktionsauswertungen je Iteration. Hochrechnung 60 Laeufe: rund 16
-  Worker-Stunden, bei zwei Workern etwa 8 h Session-Wallclock. Die alte Schaetzung
-  von 7.4 h ist damit ersetzt; freigegeben sind 10.0 h.
-- **Lambda-Auswahl, erster Versuch auf Seed 0:** alle vier Kandidaten kollabiert
-  (0.9910 bis 0.9993). Ursache ist der Seed, nicht die Regularisierung.
-- **Lambda-Auswahl, revidierte Fassung auf den Seeds 3 und 4** (D-13, Entscheidung
-  der Projektleitung eingeholt): Median des relativen L2 1e-5 auf 0.1054, **1e-4 auf
-  0.0809**, 1e-3 auf 0.1036, 1e-2 auf 0.9891. Gewaehlt ist 1e-4, der einzige
-  Kandidat unter der Schwelle 0.10 auf beiden Seeds. Auf Seed 0 haette die alte
-  Regel 1e-2 gewaehlt, also genau den Wert, der die Loesung zerstoert.
-  Artefakt: `results/v5_lambda_selection.json`.
-- Quota: 0.27 h fuer beide Lambda-Phasen, 0.18 h fuer die Profile. Kaggle-Wochenquota
-  am 2026-09-22 vor dem Matrixstart rund 5.9 von 30 h, Reset 2026-09-26.
-
-## Werkzeuge, die es vorher nicht gab
-
-- `analysis/v5_report.py` — Auswertung nach Abschnitt 6: Erfolgsquote mit
-  Wilson-Intervall, Median log10 mit Bootstrap-Intervall, Baseline-Gate aus
-  Abschnitt 10. Geschrieben vor jeder Sichtung von Matrixdaten.
-- `analysis/v5_lambda_pick.py` — wendet die Auswahlregel mechanisch an.
-- `bench/freeze_v5.py` — Freeze und Lock-Datei, mit Test gegen die CRLF-Falle.
-- Das Zellenlimit von 3000 s ist durch das 12-h-Sessionlimit ersetzt (D-11); die
-  Profilierung reicht bis 400 Iterationen mit waehlbaren Zellen (D-12).
-
-## Naechste Schritte nach dem Kernel
-
-1. Status pruefen, Output holen, `results.sqlite` uebernehmen. Erst bei 60/60
-   terminalen Laeufen gemeinsam auswerten; Fehler und Timeouts zaehlen als
-   Ergebnisse.
-2. `python -m analysis.v5_report --study-id reaction_v5_rho525_20260922
-   --json results/v5_report.json`. Das Baseline-Gate aus Abschnitt 10 zuerst lesen:
-   weicht `mlp/fp32/none` um mehr als zwei von fuenf Seeds von 2/5 ab, anhalten und
-   die Ursache klaeren, bevor interpretiert wird.
-3. FINDINGS.md und README Abschnitt 3 schreiben: Nullbefund zuerst, beide
-   ko-primaeren Metriken nebeneinander, Widersprueche zwischen ihnen berichten statt
-   aufloesen. Die Grenzen aus Abschnitt 7 uebernehmen, nicht abschwaechen.
-4. BUDGET.md mit dem Ist-Verbrauch fortschreiben.
+Moegliche naechste Schritte, keiner davon begonnen: ein MLP mit gleichem
+Rechenbudget statt gleicher Iterationszahl (klaert die groesste offene Grenze);
+eine Ablation des nicht-lokalen Graph-Kontexts ohne Diffusions- und Reaktionsterm
+(klaert, welcher Teil wirkt). Beides waere eine neue Praeregistrierung.
 
 Der folgende Stand ist historisch und wird durch diesen Abschnitt ersetzt.
 

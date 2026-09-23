@@ -130,7 +130,7 @@ def report(rows: list[dict]) -> dict:
     commits = sorted({r["git_commit"] for r in terminal.values()})
     gpus = sorted(
         {
-            json.loads(r["runtime_json"] or "{}").get("gpu_name", "unknown")
+            json.loads(r["runtime_json"] or "{}").get("device_name", "unknown")
             for r in terminal.values()
         }
     )

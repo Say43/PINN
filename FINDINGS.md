@@ -3,6 +3,129 @@
 **Diese Studie ist ein Pilot ohne konfirmatorischen Anspruch.** Berichtet werden
 Effektstärken mit Unsicherheit und Kostenmessungen; Null-Resultate stehen zuerst.
 
+## V5 — Reaction an der Kollapskante (2026-09-23, Studiendaten)
+
+Praeregistriert und eingefroren vor dem ersten Matrixlauf (`PREREGISTRATION-V5.md`,
+Tag `prereg-v5`, SHA-256 `dccababe…`). 60 von 60 Laeufen terminal, kein
+Infrastrukturfehler, keine Wiederholung. Alle Laeufe auf Kaggle Tesla T4 aus einem
+Quell-Commit (`3dbf646`), Torch 2.10.0+cu128. Studien-ID
+`reaction_v5_rho525_20260922`, λ_r = 1e-4. Rohdaten: `results/results.sqlite`,
+Auswertung: `results/v5_report.json` (`analysis/v5_report.py`, geschrieben vor der
+Sichtung der Matrixdaten).
+
+**Die Studie ist ein Pilot fuer grosse Effekte** (Praeregistrierung Abschnitt 7).
+Fuenf Seeds je Zelle tragen keine Aussage ueber einzelne Zellen; belastbar sind nur
+Vergleiche auf Backbone-Ebene ueber 20 Laeufe.
+
+### Zuerst: Die mechanistische Vorhersage ist nicht bestaetigt
+
+Vorhergesagt war ein Kontrast zwischen den Graph-Architekturen: GRAND ohne Vorteil,
+weil die Reaction-Gleichung keinen Diffusionsterm hat; GREAD mit Vorteil durch
+seinen Reaktionsterm. Eingetreten ist das nicht. **Beide** Graph-Backbones
+schlagen das MLP, und der Abstand zwischen ihnen ist mit dieser Stichprobe nicht
+aufloesbar:
+
+| Backbone | Erfolge | Quote | Wilson 95 % | Median log10(rel. L2) |
+|---|---|---|---|---|
+| mlp | 8 / 20 | 0.40 | [0.22, 0.61] | −0.530 |
+| grand | 15 / 20 | 0.75 | [0.53, 0.89] | −1.167 |
+| gread | 18 / 20 | 0.90 | [0.70, 0.97] | −1.220 |
+
+Nach der vorab festgelegten Lesart (Abschnitt 3: *„Gewinnen beide gleichermassen,
+spricht das gegen die Mechanismus-These und fuer einen allgemeinen Vorteil von
+Graph-Mixing“*) spricht das Ergebnis gegen die These, der Reaktionsterm von GREAD
+sei der wirksame Mechanismus. Die Richtung GREAD vor GRAND stimmt in allen vier
+Strata (4:3, 5:5, 4:3, 5:4) und kehrt sich nie um, ist aber nicht belegt:
+18/20 gegen 15/20, exakter Fisher-Test p = 0.41 (explorativ, nicht praeregistriert).
+
+### Der Architekturvorteil ueberlebt die Kontrolle fuer Praezision und Regularisierung
+
+H0 sagte, jeder Architekturvorteil verschwinde unter Kontrolle fuer Praezision und
+Regularisierung. In keinem der vier Strata verschwindet er:
+
+| Stratum | mlp | grand | gread |
+|---|---|---|---|
+| fp32 / none | 2/5 | 3/5 | 4/5 |
+| fp32 / double_backprop | 2/5 | 5/5 | 5/5 |
+| fp64 / none | 1/5 | 3/5 | 4/5 |
+| fp64 / double_backprop | 3/5 | 4/5 | 5/5 |
+
+Beide Graph-Backbones sind in jedem Stratum strikt besser als das MLP, in allen acht
+Vergleichen. Einzelne Strata sind mit n = 5 nicht testbar
+(Abschnitt 7); die Aussage stuetzt sich auf die Konsistenz der Richtung und die
+gepoolten Quoten. Explorativ, gepoolt ueber die Strata, exakter Fisher-Test
+zweiseitig: GREAD gegen MLP p = 0.0022, GRAND gegen MLP p = 0.054. Die
+Wilson-Intervalle von GREAD und MLP ueberlappen nicht.
+
+**Die beiden ko-primaeren Metriken widersprechen sich nicht.** Die Erfolgsquote
+ordnet mlp < grand < gread, der Median von log10(rel. L2) ebenso (−0.53, −1.17,
+−1.22).
+
+### Praezision wirkt nicht, Double Backprop schon
+
+| Faktor | Erfolge |
+|---|---|
+| fp32 | 21 / 30 |
+| fp64 | 20 / 30 |
+| none | 17 / 30 |
+| double_backprop (λ_r = 1e-4) | 24 / 30 |
+
+FP64 aendert nichts. Das passt zum Mechanismus aus „FP64 is All You Need“: Der dort
+beschriebene Praezisionseffekt entsteht durch die L-BFGS-Abbruchtoleranz unterhalb
+des FP32-Maschinenepsilons; mit `tolerance_change = tolerance_grad = 0` ist dieser
+Kanal abgeschaltet, und es bleibt kein Effekt uebrig. Double Backprop hebt die
+Quote in jedem Backbone (mlp 3→5, grand 6→9, gread 8→10 von je 10). Das war keine
+praeregistrierte Hypothese und wird als Nebenbefund berichtet.
+
+### Wie die Laeufe ausgehen
+
+Der Ausgang ist bimodal wie erwartet. Erfolge liegen zwischen 0.051 und 0.096,
+Kollapse zwischen 0.982 und 1.000. Fuenf von 60 Werten liegen dazwischen: 0.105,
+0.116 und 0.142 knapp ueber der Schwelle, 0.552 und 0.750 echt intermediaer. Zwei der
+drei knappen Faelle gehoeren zum MLP; mit einer Schwelle von 0.12 statt 0.10 kaeme
+das MLP auf 10/20, GRAND auf 15/20, GREAD bliebe bei 18/20. Die Rangfolge haengt
+also nicht an der Schwellenwahl; die Schwelle bleibt wie praeregistriert bei 0.10.
+
+### Kontrollen, die gehalten haben
+
+- **Baseline-Gate (Abschnitt 10):** `mlp/fp32/none` erreicht 2/5, exakt die lokal
+  gemessene Basisrate. Bestanden.
+- **Determinismus:** `mlp/fp32/double_backprop` reproduziert auf den Seeds 3 und 4
+  die Werte der Lambda-Auswahl auf die dritte Nachkommastelle (0.096, 0.066).
+- **Hardware:** alle 60 Laeufe auf Tesla T4, 31 auf dem ersten und 29 auf dem
+  zweiten Worker. Kein Lauf auf der lokalen GPU.
+
+### Was die Studie nicht zeigt
+
+- **Gleiche Iterationen, nicht gleicher Rechenaufwand.** Parameterzahl (≈ 51 k) und
+  L-BFGS-Iterationen (2000) sind gleich. Ein Graph-Lauf kostete aber im Median je
+  Zelle 1075 bis 1628 s, ein MLP-Lauf 86 bis 122 s, also das 10- bis 16-Fache. Ob ein MLP mit gleichem
+  Rechenbudget aufholt, ist nicht getestet.
+- **Welcher Teil des Graph-Backbones wirkt, bleibt offen.** GRAND und GREAD teilen
+  den eingefrorenen k-NN-Kontext ueber alle 1900 Kollokationspunkte. Dass beide
+  gewinnen, deutet auf diesen nicht-lokalen Mischkontext hin, nicht auf den
+  Reaktionsterm; belegt ist das nicht.
+- **Ein Arbeitspunkt.** Eine Gleichung, ein ρ, ein Netzformat, eine
+  Graphtopologie (k = 8). Keine Aussage ueber Convection oder Allen–Cahn.
+- **Seed-Ausgaenge sind hardwareabhaengig, Raten nicht.** Die Baseline trifft auf
+  der T4 wie lokal 2/5, aber auf anderen Seeds (T4: Seeds 2 und 4; CPU: 3 und 4).
+  Paarweise Vergleiche einzelner Seeds ueber Zellen hinweg sind daher nicht
+  sinnvoll.
+- **Leichter Selektionsvorteil fuer das MLP.** λ_r wurde auf zwei Laeufen der Zelle
+  `mlp/fp32/double_backprop` gewaehlt (D-13). Das beguenstigt die Baseline und
+  wirkt damit gegen den gefundenen Graph-Vorteil, nicht fuer ihn.
+- **Verworfene Lambda-Auswahl.** Die vier Seed-0-Laeufe kollabierten alle
+  (0.991 bis 0.999); die urspruengliche Regel haette λ_r = 1e-2 gewaehlt, das auf
+  den Seeds 3 und 4 ebenfalls kollabiert (0.989). Die Laeufe bleiben als
+  `NOT_STUDY_DATA` in der Datenbank.
+
+### Kosten
+
+V5 kostete 8.74 GPU-Stunden laut Kaggle-Abrechnung: 8.29 h Matrix, 0.26 h
+Lambda-Auswahl, der Rest Profile und Notebook-Overhead. Die gemessene Hochrechnung
+von rund 8 h hat gehalten; die freigegebene Obergrenze von 10.0 h wurde nicht
+erreicht. Projekt gesamt: 10.2 von 27 GPU-Stunden.
+
 ## Nachtrag 2026-08-29 — Reaction ist loesbar, und zwei Versagensarten sind trennbar
 
 Alle folgenden Laeufe sind `NOT_STUDY_DATA` und dienen der Machbarkeitspruefung.

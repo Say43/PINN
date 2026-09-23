@@ -15,6 +15,21 @@ Der V5-Runner rechnet Kaggle-Session-Wallclock, nicht die Summe beider gleichzei
 laufenden T4-Prozesse. Lambda-Auswahl und Hauptmatrix haben getrennte Limits. Die
 Hauptmatrix darf erst nach dem Freeze der V5-Praeregistrierung starten.
 
+### Iststand nach Abschluss von V5 (2026-09-23)
+
+| Posten | Soll | Ist |
+|---|---|---|
+| V5-Profile und Notebook-Overhead | — | rund 0.19 |
+| V5-Lambda-Auswahl, 4 + 8 Laeufe | 0.4 | 0.26 |
+| V5-Hauptmatrix, 60 Laeufe | 10.0 (Obergrenze) | **8.29** |
+| **V5 gesamt, Kaggle-Abrechnung** | — | **8.74** |
+| Projekt gesamt | 27.0 verfuegbar | **10.2** |
+
+Grundlage: Kaggle-Wochenquota 5.40 h vor dem ersten V5-Kernel, 14.14 h nach dem
+Matrix-Kernel (2026-09-23), und der Quota-Zustand des Runners
+(`actual_matrix_hours = 8.288`). Die gemessene Hochrechnung von rund 8 h hat
+gehalten; der Guard musste nicht eingreifen. Die Reserve von 1.0 h ist unberuehrt.
+
 ### Gemessene Kosten auf 2x T4 (2026-09-22)
 
 Zwei Proben, beide `NOT_STUDY_DATA`: 25 Iterationen je vier Zellen

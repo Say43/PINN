@@ -10,11 +10,43 @@ import bench.freeze_v5 as freeze_v5
 from kaggle.v5_runner import _verify_frozen_preregistration
 
 
+DRAFT_HEADER = (
+    "# Präregistrierung V5 — Reaction an der Kollapskante\n\n"
+    "**Status: ENTWURF, NICHT eingefroren.** Neue Studie.\n"
+)
+
+
+def draft_from_live_document(origin: Path) -> str:
+    """A draft built from the real document body.
+
+    The live preregistration is frozen since 2026-09-22, and freezing it again is
+    refused by design. The tests therefore put a draft header in front of the real
+    sections, so they still exercise every heading the frozen study depends on.
+    """
+    text = (origin / "PREREGISTRATION-V5.md").read_text(encoding="utf-8").replace("\r\n", "\n")
+    return DRAFT_HEADER + text[text.index("\n---\n"):]
+
+
+class LiveLockTests(unittest.TestCase):
+    def test_live_preregistration_is_frozen_and_matches_its_lock(self) -> None:
+        """The study ran against this hash; any later edit to the document breaks it."""
+        lock = json.loads(Path("PREREGISTRATION-V5.lock.json").read_text(encoding="utf-8"))
+        text = Path("PREREGISTRATION-V5.md").read_text(encoding="utf-8")
+        for marker in freeze_v5.DRAFT_MARKERS:
+            self.assertNotIn(marker, text)
+        digest = hashlib.sha256(text.replace("\r\n", "\n").encode("utf-8")).hexdigest()
+        self.assertEqual(digest, lock["sha256"])
+        self.assertEqual(lock["lambda_r"], 1.0e-4)
+        self.assertEqual(lock["study_id"], "reaction_v5_rho525_20260922")
+
+
 class FreezeV5Tests(unittest.TestCase):
     def setUp(self) -> None:
         self.origin = Path.cwd()
         self.work = Path(tempfile.mkdtemp())
-        shutil.copy(self.origin / "PREREGISTRATION-V5.md", self.work / "PREREGISTRATION-V5.md")
+        (self.work / "PREREGISTRATION-V5.md").write_text(
+            draft_from_live_document(self.origin), encoding="utf-8", newline="\n"
+        )
         os.chdir(self.work)
 
     def tearDown(self) -> None:

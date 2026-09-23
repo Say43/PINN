@@ -13,8 +13,8 @@ The first study slice was stopped by its own decision gate: the collocation grid
 been reduced below the Nyquist limit of the target solution, so every model satisfied
 the PDE residual while being wrong. This document describes the framework, what the
 pilot measured, the diagnostics that separated two distinct failure modes of PINNs on
-these benchmarks, and the fully specified follow-up study that is prepared but not yet
-run.
+these benchmarks, and the preregistered follow-up study at the collapse edge of the
+reaction equation, which was run in full (60 of 60 runs).
 
 **Summary of findings.**
 On the convection equation at β = 50, a grid of 1.75 samples per period admits
@@ -25,9 +25,19 @@ case by Krishnapriyan et al. — to relative L2 0.058 with an adequately resolve
 and locates the collapse edge between ρ = 5 and ρ = 6, where a second failure mode
 appears that more collocation points do not cure. FP64 was faster than FP32 on the
 T4 for every backbone, because the workload is launch-bound and FP64 needs fewer
-line-search evaluations. 1.48 of 27 available GPU-hours were spent; the follow-up
-study at the collapse edge (60 runs) is specified, and its launcher refuses to start
-until its preregistration is frozen.
+line-search evaluations.
+
+In the follow-up study at the collapse edge (reaction, ρ = 5.25, 60 runs,
+preregistered and hash-locked before the first run), both graph backbones escape the
+collapse far more often than the MLP: 18 of 20 runs for GREAD and 15 of 20 for GRAND,
+against 8 of 20 for the MLP. The advantage holds in every precision × regularisation
+stratum, so it does not vanish when those factors are controlled. The preregistered
+mechanism did not hold, though: GRAND, which has no reaction term, was predicted to
+gain nothing, and it gains almost as much as GREAD; the difference between the two
+is not resolvable at this sample size. Precision had no effect (21 vs. 20 of 30);
+double backpropagation raised the success rate in every backbone (24 vs. 17 of 30).
+The comparison is at equal parameters and iterations, not at equal compute — a graph
+run costs 10 to 16 times an MLP run. 10.2 of 27 available GPU-hours were spent.
 
 Working documents (preregistration, deviations, budget, findings, handover) are in
 German; this README is the English report.
@@ -223,32 +233,108 @@ seeds, and the follow-up study reports both as co-primary.
 
 ### 2.6 Budget
 
-1.48 of 27 available GPU-hours were used: 0.54 h calibration, 0.94 h for the pilot
-slice. No budget was spent on runs that would have built on the faulty grid. A costed
+1.48 GPU-hours were used by the pilot: 0.54 h calibration, 0.94 h for the pilot
+slice. The follow-up study added 8.74 h (8.29 h matrix, 0.26 h λ_r selection, the
+rest profiling and notebook overhead), for 10.2 of 27 available GPU-hours in total.
+No budget was spent on runs that would have built on the faulty grid. A costed
 re-plan (`BUDGET.md`) shows the original full design would need ≈ 62 GPU-hours,
 about twelve times the granted budget; the cheapest scientifically meaningful
 extension (double backprop on convection only) needs ≈ 10 h.
 
-## 3. Follow-up study (specified, not run)
+## 3. Follow-up study: the collapse edge of the reaction equation
 
-The follow-up protocol (`PREREGISTRATION-V5.md`, status *draft*) moves the study to
-the reaction equation at ρ = 5.25, the measured collapse edge, where the MLP baseline
-succeeds in 2 of 5 seeds (final rel. L2 0.996, 0.999, 0.109, 0.083, 0.070). The
-working point was chosen from MLP runs only, so it cannot favour a graph backbone.
-Same 3 × 2 × 2 × 5 matrix (60 runs), 1 600 domain points, 2 000 iterations,
-co-primary metrics success rate (Wilson 95 % CI) and median log10(rel. L2) (bootstrap
-CI), threshold 0.10 fixed before data. The prediction is a contrast between the two
-graph architectures: GRAND no gain, GREAD a gain. λ_r for double backprop is selected
-outcome-blind from {1e-5, 1e-4, 1e-3, 1e-2} on the MLP baseline first.
+### 3.1 Design
 
-The launcher (`kaggle/v5_runner.py`, one worker process per T4) refuses to build the
-matrix while the preregistration carries the status *draft* or while its SHA-256 does
-not match the frozen value. Local CPU checks validate the revised fixed-support graph
-derivatives and inference consistency; short graph training runs hit their diagnostic
-time limit, so the earlier GPU cost estimate does not establish that the 60-run matrix
-fits the budget, and a profile on 2× T4 is required before the matrix starts
-(`docs/local-validation-v5.md`). The next external steps are that profile and the
-four λ_r selection runs.
+The protocol (`PREREGISTRATION-V5.md`, frozen 2026-09-22, tag `prereg-v5`, SHA-256
+in `PREREGISTRATION-V5.lock.json`) moves the study to the reaction equation at
+ρ = 5.25, the measured collapse edge, where the MLP baseline succeeded in 2 of 5 seeds
+in local runs. The working point was chosen from MLP runs only, so it cannot favour a
+graph backbone. Matrix: 3 backbones × 2 precisions × 2 regularisations × 5 seeds =
+60 runs, 1 600 domain points, 2 000 L-BFGS iterations, λ_r = 1e-4. Co-primary metrics
+are the success rate (rel. L2 < 0.10, Wilson 95 % CI) and the median log10(rel. L2)
+(bootstrap CI, 10 000 resamples); the threshold was fixed before data. The
+prediction was a contrast between the two graph architectures: GRAND, which has no
+reaction term, no gain; GREAD a gain over both.
+
+Two things were measured before the freeze and changed the plan. A GPU profile on
+2× T4 replaced the earlier cost estimate (7.4 h, from a superseded graph
+implementation) with a measured ≈ 8 h. And the λ_r selection, specified on seed 0,
+failed: all four candidates collapsed (0.991 to 0.999), because seed 0 is one of the
+seeds on which the unregularised baseline already fails. The rule would have picked
+λ_r = 1e-2 on noise. It was moved, before the freeze and on MLP data only, to the two
+seeds on which the baseline succeeds; there 1e-2 collapses as well (median 0.989)
+and 1e-4 is the only candidate below the threshold on both seeds (median 0.081). The
+change and the discarded runs are recorded as deviation D-13.
+
+The launcher refuses to build the matrix while the preregistration is a draft or
+while its hash differs from the lock. The hash is taken over the LF-normalised bytes
+that Git stores and that the Kaggle payload receives; a hash over a CRLF working copy
+would not have matched on Kaggle.
+
+### 3.2 Results
+
+All 60 runs terminated normally on Kaggle Tesla T4 from a single source commit; no
+infrastructure failure, no repetition. The baseline gate held: `mlp/fp32/none`
+reached 2 of 5, the rate measured locally.
+
+| backbone | successes | rate | Wilson 95 % | median log10(rel. L2) |
+|---|---|---|---|---|
+| MLP | 8 / 20 | 0.40 | [0.22, 0.61] | −0.53 |
+| GRAND | 15 / 20 | 0.75 | [0.53, 0.89] | −1.17 |
+| GREAD | 18 / 20 | 0.90 | [0.70, 0.97] | −1.22 |
+
+| stratum | MLP | GRAND | GREAD |
+|---|---|---|---|
+| FP32, no regularisation | 2/5 | 3/5 | 4/5 |
+| FP32, double backprop | 2/5 | 5/5 | 5/5 |
+| FP64, no regularisation | 1/5 | 3/5 | 4/5 |
+| FP64, double backprop | 3/5 | 4/5 | 5/5 |
+
+**The preregistered mechanism is not supported.** GRAND was predicted to gain
+nothing and gains nearly as much as GREAD. By the reading fixed in advance — if both
+graph backbones win, that argues against the mechanism and for a general benefit of
+graph mixing — the reaction term of GREAD is not shown to be what helps. GREAD ranks
+above GRAND in every stratum and never below it, but 18 vs. 15 of 20 is not
+resolvable (Fisher exact, two-sided, p = 0.41; exploratory, not preregistered).
+
+**The architecture advantage survives control for precision and regularisation.**
+Both graph backbones beat the MLP in all four strata, eight of eight comparisons.
+Single strata carry no inference at n = 5; the claim rests on the consistent
+direction and the pooled rates. Exploratory Fisher tests on the pooled counts:
+GREAD vs. MLP p = 0.0022, GRAND vs. MLP p = 0.054. The two co-primary metrics agree
+on the ordering.
+
+**Precision has no effect; double backpropagation does.** FP32 and FP64 succeed in
+21 and 20 of 30 runs. This is what the L-BFGS mechanism behind "FP64 is All You Need"
+predicts once the tolerances are disabled: the precision effect runs through the
+stopping criterion, and with none left there is nothing to transmit it. Double
+backpropagation raises the success rate in every backbone (MLP 3 → 5, GRAND 6 → 9,
+GREAD 8 → 10 of 10); this was not a preregistered hypothesis.
+
+The outcome is bimodal. Successes lie between 0.051 and 0.096, collapses between
+0.982 and 1.000; five of 60 values fall in between, three of them just above the
+threshold. Raising the threshold to 0.12 would lift the MLP to 10 of 20 and leave
+the ordering unchanged.
+
+### 3.3 What the follow-up does not show
+
+- **Equal iterations, not equal compute.** Parameters (≈ 51 k) and iterations (2 000)
+  are matched; wall-clock is not. A graph run cost 1 075 to 1 628 s (cell medians), an
+  MLP run 86 to 122 s. Whether an MLP given the same compute catches up is untested.
+- **Which part of the graph backbone helps is open.** GRAND and GREAD share the frozen
+  k-NN context over all 1 900 collocation points. That both gain points to this
+  non-local mixing rather than to the reaction term; it does not establish it.
+- **One working point.** One equation, one ρ, one network size, one graph topology.
+- **Seed outcomes depend on hardware; rates do not.** The baseline reached 2 of 5 on
+  the T4 as on the CPU, but on different seeds. Seed-wise pairing across cells is not
+  meaningful. On identical hardware the runs are deterministic: the matrix reproduced
+  the λ_r selection runs to three decimals.
+- **A small selection advantage for the MLP.** λ_r was chosen on two runs of the
+  `mlp/fp32/double_backprop` cell. That favours the baseline, i.e. it works against
+  the graph advantage found, not for it.
+
+Full results, raw values per run and the cost breakdown: `FINDINGS.md`,
+`results/v5_report.json`, `results/results.sqlite`.
 
 ## 4. Limitations
 
@@ -258,15 +344,15 @@ four λ_r selection runs.
   PyTorch re-implementation, not an exact reproduction.
 - All resolution and feasibility diagnostics ran locally on CPU and are marked
   `NOT_STUDY_DATA`; they inform the design but are not study results.
-- The GPU cost of the revised graph backbones is unmeasured.
-- Early runs stored `git_commit = unknown` and did not persist the hardware seen;
-  both are fixed for the follow-up.
+- Early pilot runs stored `git_commit = unknown` and did not persist the hardware
+  seen; every follow-up run records its source commit, Torch, CUDA and GPU.
+- The limits of the follow-up study itself are listed in §3.3.
 
 ## 5. Reproduction
 
 ```bash
 pip install -e .                             # numpy, scipy, torch >= 2.6; Python >= 3.11
-python -m unittest discover -s tests -v      # 52 tests, CPU only
+python -m unittest discover -s tests -v      # 64 tests, CPU only
 python -m src.train --config configs/smoke.json   # 200 L-BFGS iterations, 100 points, writes a real SQLite row
 ```
 
